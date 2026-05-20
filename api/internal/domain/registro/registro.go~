@@ -1,0 +1,19 @@
+package registro
+
+import "time"
+
+type RegistroMedia struct {
+	UserId    string `json: "user-id"`
+	Filename  string `json: "filename"`
+	MediaType string `json: "media-type"`
+	Mimetype  string `json: "mime-type"`
+	Metadata  string `json: "metadata"`
+	Size      int64  `json: "filename"`
+}
+
+type RegistroEvent struct {
+	EventId   string        `json: "event-id"`
+	Cadastro  RegistroMedia `json: "cadastro"`
+	UserId    string        `json: "user-id"`
+	CreatedAt time.Time     `json: "created-at"`
+}
