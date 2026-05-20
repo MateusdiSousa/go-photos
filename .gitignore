@@ -1,2 +1,2 @@
 node_key
-garage/data
+infra/garage-s3/data/**
