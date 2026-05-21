@@ -8,7 +8,7 @@ import (
 	"syscall"
 
 	"github.com/IBM/sarama"
-	consulta "go-photos.processador/internal/consulta/domain"
+	consulta "github.com/MateusdiSousa/go-photos/processador/internal/consulta/domain"
 )
 
 func main() {

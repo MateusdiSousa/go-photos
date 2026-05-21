@@ -4,18 +4,18 @@ go 1.25.6
 
 require (
 	github.com/IBM/sarama v1.49.0
-	github.com/confluentinc/confluent-kafka-go v1.9.2
+	github.com/MateusdiSousa/go-photos/api v0.0.0-20260521231020-d1f74509e756
+	github.com/jackc/pgx/v5 v5.9.2
 )
 
 require (
-	github.com/MateusdiSousa/go-photos v0.0.0-20260506143738-d68cd7f39e31 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/eapache/go-resiliency v1.7.0 // indirect
 	github.com/eapache/queue v1.1.0 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
-	github.com/jackc/pgx/v5 v5.9.2 // indirect
 	github.com/jcmturner/aescts/v2 v2.0.0 // indirect
 	github.com/jcmturner/dnsutils/v2 v2.0.0 // indirect
 	github.com/jcmturner/gofork v1.7.6 // indirect

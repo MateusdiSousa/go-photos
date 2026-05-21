@@ -7,7 +7,7 @@ import (
 	"log"
 	"os"
 
-	storagev1 "go-photos.api/internal/proto"
+	storagev1 "github.com/MateusdiSousa/go-photos/api/internal/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )

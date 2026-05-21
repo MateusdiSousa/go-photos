@@ -1,9 +1,11 @@
 package domain
 
 import (
+	"encoding/json"
 	"log"
 
 	"github.com/IBM/sarama"
+	registro "github.com/MateusdiSousa/go-photos/api/domain/registtro"
 )
 
 type Consumer struct {
@@ -20,6 +22,12 @@ func (c *Consumer) Cleanup(sarama.ConsumerGroupSession) error {
 }
 
 func (c *Consumer) ProcessMessage(message []byte) error {
+	var data registro.RegistroEvent
+	err := json.Unmarshal(message, &data)
+	if err != nil {
+		log.Fatalf("Falha ao converter mensagem: %s", err)
+	}
+	log.Printf("Dado convertido: %s", &data)
 	return nil
 }
 

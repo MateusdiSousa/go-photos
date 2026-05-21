@@ -9,10 +9,10 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"google.golang.org/grpc"
 
-	api "go-photos.api/internal/api"
-	"go-photos.api/internal/client"
-	storagev1 "go-photos.api/internal/proto"
-	"go-photos.api/internal/storage"
+	api "github.com/MateusdiSousa/go-photos/api/internal/api"
+	"github.com/MateusdiSousa/go-photos/api/internal/client"
+	storagev1 "github.com/MateusdiSousa/go-photos/api/internal/proto"
+	"github.com/MateusdiSousa/go-photos/api/internal/storage"
 )
 
 var (

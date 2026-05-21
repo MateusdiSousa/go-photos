@@ -5,11 +5,11 @@ import (
 	"io"
 	"log"
 
+	"github.com/MateusdiSousa/go-photos/api/domain/registro"
+	storagev1 "github.com/MateusdiSousa/go-photos/api/internal/proto"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
-	"go-photos.api/internal/domain/registro"
-	storagev1 "go-photos.api/internal/proto"
 )
 
 type StorageHandler struct {

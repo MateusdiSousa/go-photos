@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"go-photos.api/internal/storage"
+	"github.com/MateusdiSousa/go-photos/api/internal/storage"
 )
 
 func TestGetClientMinio(t *testing.T) {
