@@ -1,4 +1,4 @@
-module go-photos.api
+module github.com/MateusdiSousa/go-photos/api
 
 go 1.25.6
 

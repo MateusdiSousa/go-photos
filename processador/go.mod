@@ -1,4 +1,4 @@
-module go-photos.processador
+module github.com/MateusdiSousa/go-photos/processador
 
 go 1.25.6
 
