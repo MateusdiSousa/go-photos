@@ -68,10 +68,12 @@ func (service *StorageHandler) Upload(stream storagev1.StorageService_UploadServ
 		if novoRegistro == nil {
 			novoRegistro = registro.NewRegistroEvent(registro.RegistroMedia{
 				UserId:    req.UserId,
+				FileId:    uuidFile,
 				Filename:  req.Filename,
 				MediaType: req.MediaType,
 				Mimetype:  req.Mimetype,
 				Metadata:  req.Metadados,
+				Bucket:    BUCKET_PHOTOS,
 				Size:      req.Size}, req.UserId)
 		}
 
@@ -86,6 +88,7 @@ func (service *StorageHandler) Upload(stream storagev1.StorageService_UploadServ
 		log.Printf("Falha fazer upload do arquivo para o servico S3: %s", err)
 		return err
 	}
+
 	log.Printf("Arquivo salvo com sucesso! Nome: %s , Tamanho: (%d bytes)", uuidFile, size)
 
 	evento, err := json.Marshal(*novoRegistro)
