@@ -9,7 +9,7 @@ import (
 
 var instance *pgx.Conn = nil
 
-const URI = ""
+const URI = "postgresql://postgres:example@localhost:5432/postgres"
 
 func GetInstace() *pgx.Conn {
 	var err error

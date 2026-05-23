@@ -1,15 +1,40 @@
 package domain
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 
 	"github.com/IBM/sarama"
-	registro "github.com/MateusdiSousa/go-photos/api/domain/registtro"
+	registro "github.com/MateusdiSousa/go-photos/api/domain/registro"
+	"github.com/MateusdiSousa/go-photos/processador/internal/consulta/repository"
 )
 
 type Consumer struct {
-	Ready chan bool
+	Ready      chan bool
+	repository *repository.ConsultaRepository
+}
+
+func NewConsumer(channel chan bool, repo *repository.ConsultaRepository) *Consumer {
+	return &Consumer{
+		Ready:      channel,
+		repository: repo}
+}
+
+func (c *Consumer) ProcessMessage(message []byte) error {
+	var data registro.RegistroEvent
+	err := json.Unmarshal(message, &data)
+	if err != nil {
+		log.Printf("Falha ao converter mensagem: %s", err)
+	}
+
+	err = c.repository.SaveRegistroMedia(context.Background(), data.Cadastro)
+	if err != nil {
+		log.Printf("Falha ao salvar arquivo no banco de dados: %s", err)
+	} else {
+		log.Print("Mensagem processada com sucesso.")
+	}
+	return nil
 }
 
 func (c *Consumer) Setup(sarama.ConsumerGroupSession) error {
@@ -18,16 +43,6 @@ func (c *Consumer) Setup(sarama.ConsumerGroupSession) error {
 }
 
 func (c *Consumer) Cleanup(sarama.ConsumerGroupSession) error {
-	return nil
-}
-
-func (c *Consumer) ProcessMessage(message []byte) error {
-	var data registro.RegistroEvent
-	err := json.Unmarshal(message, &data)
-	if err != nil {
-		log.Fatalf("Falha ao converter mensagem: %s", err)
-	}
-	log.Printf("Dado convertido: %s", &data)
 	return nil
 }
 

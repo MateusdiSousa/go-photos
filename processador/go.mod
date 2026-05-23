@@ -4,8 +4,13 @@ go 1.25.6
 
 require (
 	github.com/IBM/sarama v1.49.0
-	github.com/MateusdiSousa/go-photos/api v0.0.0-20260521231020-d1f74509e756
+	github.com/MateusdiSousa/go-photos/api v0.0.0-20260521234934-56878cf19e54
 	github.com/jackc/pgx/v5 v5.9.2
+)
+
+replace (
+	google.golang.org/genproto => google.golang.org/genproto v0.0.0-20240213162025-012b6fc9bca9
+	google.golang.org/genproto/googleapis/rpc => google.golang.org/genproto/googleapis/rpc v0.0.0-20260226221140-a57be14db171
 )
 
 require (

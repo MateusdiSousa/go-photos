@@ -7,15 +7,15 @@ import (
 )
 
 type RegistroMedia struct {
-	UserId    string `json:"user-id"`
-	Filename  string `json:"filename"`
-	MediaType string `json:"media-type"`
-	Mimetype  string `json:"mime-type"`
-	Metadata  string `json:"metadata"`
-	Size      int64  `json:"size"`
-	FilePath  string `json:"filepath"`
-	FileId    string `json:"file-id"`
-	Bucket    string `json:"bucket"`
+	UserId    string                 `json:"user-id"`
+	Filename  string                 `json:"filename"`
+	MediaType string                 `json:"media-type"`
+	Mimetype  string                 `json:"mime-type"`
+	Metadata  map[string]interface{} `json:"metadata"`
+	Size      int64                  `json:"size"`
+	FilePath  string                 `json:"filepath"`
+	FileId    string                 `json:"file-id"`
+	Bucket    string                 `json:"bucket"`
 }
 
 type RegistroEvent struct {

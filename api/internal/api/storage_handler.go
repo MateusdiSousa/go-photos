@@ -72,7 +72,7 @@ func (service *StorageHandler) Upload(stream storagev1.StorageService_UploadServ
 				Filename:  req.Filename,
 				MediaType: req.MediaType,
 				Mimetype:  req.Mimetype,
-				Metadata:  req.Metadados,
+				Metadata:  nil,
 				Bucket:    BUCKET_PHOTOS,
 				Size:      req.Size}, req.UserId)
 		}

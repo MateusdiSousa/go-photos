@@ -1,7 +1,7 @@
 github.com/IBM/sarama v1.49.0 h1:FhLbVia5yi426qttj0kNTI86vPc3v+/3mGHkif1Fsao=
 github.com/IBM/sarama v1.49.0/go.mod h1:m/Q1aFezH82/AglfTpJbw/fO0ZybYXhPgTmvajiZX50=
-github.com/MateusdiSousa/go-photos/api v0.0.0-20260521231020-d1f74509e756 h1:iI+U/Yl5AZxyGQvt/KzviXfy91tgd/ETXDzr6pzZQ/M=
-github.com/MateusdiSousa/go-photos/api v0.0.0-20260521231020-d1f74509e756/go.mod h1:3NKm5t6oNU8/f6z4CICN+ZIS52KqykgHUhLhx9RIkgo=
+github.com/MateusdiSousa/go-photos/api v0.0.0-20260521234934-56878cf19e54 h1:QdZIJ0q4BnXYbsUUvdTnGYpNoSz5o2lToff11g8/GOU=
+github.com/MateusdiSousa/go-photos/api v0.0.0-20260521234934-56878cf19e54/go.mod h1:L2eGlVtloyfUGzGwnqqqA0WzOUFY0Nzfi/2d8qiS5hk=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

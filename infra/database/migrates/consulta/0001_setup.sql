@@ -1,8 +1,8 @@
 CREATE SCHEMA consulta;
 
 CREATE TABLE consulta.registro_media (
-    file_id UUID PRIMARY KEY,                   -- Identificador único do arquivo
-    user_id UUID NOT NULL,                      -- Quem enviou (bom para indexar e relacionar)
+    file_id TEXT PRIMARY KEY,                   -- Identificador único do arquivo
+    user_id TEXT NOT NULL,                      -- Quem enviou (bom para indexar e relacionar)
     filename TEXT NOT NULL,                     -- Nome original do arquivo
     media_type VARCHAR(20) NOT NULL,            -- ex: 'image', 'video'
     mime_type VARCHAR(100) NOT NULL,            -- ex: 'image/jpeg', 'video/mp4'

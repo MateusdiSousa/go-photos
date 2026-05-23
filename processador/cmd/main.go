@@ -9,9 +9,20 @@ import (
 
 	"github.com/IBM/sarama"
 	consulta "github.com/MateusdiSousa/go-photos/processador/internal/consulta/domain"
+	"github.com/MateusdiSousa/go-photos/processador/internal/consulta/repository"
+	"github.com/MateusdiSousa/go-photos/processador/internal/database"
 )
 
 func main() {
+
+	// Conectando com postgres.
+	postgresConn := database.GetInstace()
+	consultaRepository, err := repository.NewConsultaRepository(postgresConn)
+	if err != nil {
+		log.Fatalf("Falha ao criar repositório de consulta: %s", err)
+	}
+
+	// Iniciando o Kafka
 	config := sarama.NewConfig()
 	config.Version = sarama.V4_2_0_0
 	config.Consumer.Offsets.Initial = sarama.OffsetOldest
@@ -34,9 +45,7 @@ func main() {
 	}
 	defer client.Close()
 
-	consumer := consulta.Consumer{
-		Ready: make(chan bool),
-	}
+	consumer := consulta.NewConsumer(make(chan bool), consultaRepository) //
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -44,7 +53,7 @@ func main() {
 	go func() {
 		topicos := []string{"registro.media"}
 		for {
-			if err := client.Consume(ctx, topicos, &consumer); err != nil {
+			if err := client.Consume(ctx, topicos, consumer); err != nil {
 				log.Fatalf("Falha ao consumir dos tópicos Kafka: %s", err)
 			}
 
