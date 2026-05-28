@@ -1,17 +1,23 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
 	"net"
+	"os"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/jackc/pgx/v5"
+	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
 
 	api "github.com/MateusdiSousa/go-photos/api/internal/api"
 	"github.com/MateusdiSousa/go-photos/api/internal/client"
 	storagev1 "github.com/MateusdiSousa/go-photos/api/internal/proto"
+	"github.com/MateusdiSousa/go-photos/api/internal/repository"
+	"github.com/MateusdiSousa/go-photos/api/internal/service"
 	"github.com/MateusdiSousa/go-photos/api/internal/storage"
 )
 
@@ -25,15 +31,39 @@ func main() {
 	if err != nil {
 		log.Fatalf("Falha ao ouvir na porta %d: %s", port, err)
 	}
+	err = godotenv.Load()
+	if err != nil {
+		log.Fatalf("Falha ao carregar arquivo .env: %s", err)
+	}
+	databaseUrl := os.Getenv("POSTGRES_DATABASE_URL")
 
-	clientMinio := storage.GetClientMinio()
+	// Conexões, Clientes e Repositórios
+
+	connPostgres, err := pgx.Connect(context.Background(), databaseUrl)
+	if err != nil {
+		log.Fatalf("Falha ao criar conexão com banco postgres na url %s: %s", databaseUrl, err)
+	}
+
+	clientMinio, err := storage.GetClientMinio()
+	if err != nil {
+		log.Fatalf("Falha ao instaciar cliente do MinioIO: %s", err)
+	}
+
 	producer := client.GetKafkaProducer()
 
+	mediaRepository, err := repository.NewMediaRepository(connPostgres)
+	if err != nil {
+		log.Fatalf("Falha ao criar repositorio de media: %s", err)
+	}
+
+	// SERVICES
+	mediaService := service.NewMediaService(mediaRepository, clientMinio)
+
+	// SERVER
 	server := grpc.NewServer()
+	storageServer := api.NewStorageHandler(clientMinio, producer, mediaService)
 
-	storageService := api.NewStorageHandler(clientMinio, producer)
-
-	storagev1.RegisterStorageServiceServer(server, storageService)
+	storagev1.RegisterStorageServiceServer(server, storageServer)
 
 	go func() {
 		for events := range producer.Events() {

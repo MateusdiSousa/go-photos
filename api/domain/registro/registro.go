@@ -7,15 +7,18 @@ import (
 )
 
 type RegistroMedia struct {
-	UserId    string                 `json:"user-id"`
-	Filename  string                 `json:"filename"`
-	MediaType string                 `json:"media-type"`
-	Mimetype  string                 `json:"mime-type"`
-	Metadata  map[string]interface{} `json:"metadata"`
-	Size      int64                  `json:"size"`
-	FilePath  string                 `json:"filepath"`
-	FileId    string                 `json:"file-id"`
-	Bucket    string                 `json:"bucket"`
+	FileId    string                 `db:"file_id" json:"file-id"`
+	UserId    string                 `db:"user_id" json:"user-id"`
+	Filename  string                 `db:"filename" json:"filename"`
+	MediaType string                 `db:"media_type" json:"media-type"`
+	Mimetype  string                 `db:"mime_type" json:"mime-type"`
+	Size      int64                  `db:"file_size" json:"size"`
+	Bucket    string                 `db:"bucket" json:"bucket"`
+	Metadata  map[string]interface{} `db:"metadata" json:"metadata"`
+	CreatedAt time.Time              `db:"created_at" json:"created-at"`
+
+	// db:"-" avisa ao pgx para ignorar, já que essa coluna não existe fisicamente na tabela
+	FilePath string `db:"-" json:"filepath"`
 }
 
 type RegistroEvent struct {

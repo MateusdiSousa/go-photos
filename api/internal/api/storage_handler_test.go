@@ -7,6 +7,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/MateusdiSousa/go-photos/api/internal/api"
 	storagev1 "github.com/MateusdiSousa/go-photos/api/internal/proto"
 
 	"google.golang.org/grpc"
@@ -20,7 +21,8 @@ var lis *bufconn.Listener
 func init() {
 	lis = bufconn.Listen(bufsize)
 	s := grpc.NewServer()
-	storagev1.RegisterStorageServiceServer(s, NewStorageHandler())
+	storageServer := api.NewStorageHandler(nil, nil)
+	storagev1.RegisterStorageServiceServer(s, storageServer)
 	go func() {
 		if err := s.Serve(lis); err != nil {
 			log.Fatalf("Falha ao iniciar o servidor: %s", err)
@@ -59,10 +61,13 @@ func TestUpload(t *testing.T) {
 
 	for _, chunk := range chunks {
 		err := stream.Send(&storagev1.UploadRequest{
-			Chunks:   chunk,
-			Filename: "Teste",
-			User:     "Teste",
-			Ext:      "txt",
+			Chunks:    chunk,
+			Filename:  "Teste",
+			UserId:    "Teste",
+			MediaType: "text",
+			Mimetype:  "txt",
+			Metadados: "",
+			Size:      int64(len(chunks)),
 		})
 		if err != nil {
 			t.Fatalf("Erro fatal ao enviar chunks: %s", err)

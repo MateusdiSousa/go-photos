@@ -19,7 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	StorageService_Upload_FullMethodName = "/storage.v1.StorageService/Upload"
+	StorageService_Upload_FullMethodName   = "/storage.v1.StorageService/Upload"
+	StorageService_GetMedia_FullMethodName = "/storage.v1.StorageService/GetMedia"
 )
 
 // StorageServiceClient is the client API for StorageService service.
@@ -27,6 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type StorageServiceClient interface {
 	Upload(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[UploadRequest, UploadResponse], error)
+	GetMedia(ctx context.Context, in *GetMediaRequest, opts ...grpc.CallOption) (*GetMediaResponse, error)
 }
 
 type storageServiceClient struct {
@@ -50,11 +52,22 @@ func (c *storageServiceClient) Upload(ctx context.Context, opts ...grpc.CallOpti
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type StorageService_UploadClient = grpc.ClientStreamingClient[UploadRequest, UploadResponse]
 
+func (c *storageServiceClient) GetMedia(ctx context.Context, in *GetMediaRequest, opts ...grpc.CallOption) (*GetMediaResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetMediaResponse)
+	err := c.cc.Invoke(ctx, StorageService_GetMedia_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // StorageServiceServer is the server API for StorageService service.
 // All implementations must embed UnimplementedStorageServiceServer
 // for forward compatibility.
 type StorageServiceServer interface {
 	Upload(grpc.ClientStreamingServer[UploadRequest, UploadResponse]) error
+	GetMedia(context.Context, *GetMediaRequest) (*GetMediaResponse, error)
 	mustEmbedUnimplementedStorageServiceServer()
 }
 
@@ -67,6 +80,9 @@ type UnimplementedStorageServiceServer struct{}
 
 func (UnimplementedStorageServiceServer) Upload(grpc.ClientStreamingServer[UploadRequest, UploadResponse]) error {
 	return status.Error(codes.Unimplemented, "method Upload not implemented")
+}
+func (UnimplementedStorageServiceServer) GetMedia(context.Context, *GetMediaRequest) (*GetMediaResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetMedia not implemented")
 }
 func (UnimplementedStorageServiceServer) mustEmbedUnimplementedStorageServiceServer() {}
 func (UnimplementedStorageServiceServer) testEmbeddedByValue()                        {}
@@ -96,13 +112,36 @@ func _StorageService_Upload_Handler(srv interface{}, stream grpc.ServerStream) e
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type StorageService_UploadServer = grpc.ClientStreamingServer[UploadRequest, UploadResponse]
 
+func _StorageService_GetMedia_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetMediaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StorageServiceServer).GetMedia(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: StorageService_GetMedia_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StorageServiceServer).GetMedia(ctx, req.(*GetMediaRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // StorageService_ServiceDesc is the grpc.ServiceDesc for StorageService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var StorageService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "storage.v1.StorageService",
 	HandlerType: (*StorageServiceServer)(nil),
-	Methods:     []grpc.MethodDesc{},
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetMedia",
+			Handler:    _StorageService_GetMedia_Handler,
+		},
+	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "Upload",
