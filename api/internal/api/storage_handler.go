@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/MateusdiSousa/go-photos/api/domain/registro"
@@ -25,8 +26,10 @@ type StorageHandler struct {
 }
 
 var (
-	REGISTRO_MEDIA = "registro.media"
-	EXPIRY_TIME    = time.Hour * 2
+	REGISTRO_CMD = "registro.comando"
+	CMD_UPLOAD   = "registro-upload"
+	EXPIRY_TIME  = time.Hour * 2
+	BUCKET_TEMP  = "temp-media"
 )
 
 func NewStorageHandler(clientMinio *minio.Client, kafkaProducer *kafka.Producer, mediaService *service.MediaService) *StorageHandler {
@@ -35,8 +38,6 @@ func NewStorageHandler(clientMinio *minio.Client, kafkaProducer *kafka.Producer,
 		storageClient: clientMinio,
 		mediaService:  mediaService}
 }
-
-var BUCKET_PHOTOS = "photos"
 
 func RegistroMediaToMediaInfo(registros []*registro.RegistroMedia) []*storagev1.MediaInfo {
 	quantidadeRegistro := len(registros)
@@ -66,10 +67,7 @@ func (server *StorageHandler) GetMedia(ctx context.Context, request *storagev1.G
 }
 
 func (server *StorageHandler) Upload(stream storagev1.StorageService_UploadServer) error {
-	if server.storageClient == nil {
-		log.Println("Erro crítico: Cliente S3/MinIO não foi inicializado!")
-		return status.Error(codes.Internal, "Falha ao conectar com o serviço de armazenamento")
-	}
+	var once = sync.Once{}
 
 	pipeReader, pipeWriter := io.Pipe()
 
@@ -77,20 +75,9 @@ func (server *StorageHandler) Upload(stream storagev1.StorageService_UploadServe
 
 	errChan := make(chan error, 1)
 
-	var novoRegistro *registro.RegistroEvent = nil
+	var novoCmd *registro.RegistroComando = nil
 
-	go func() {
-		defer pipeReader.Close()
-		_, err := server.storageClient.PutObject(
-			stream.Context(),
-			BUCKET_PHOTOS,
-			uuidFile,
-			pipeReader,
-			-1,
-			minio.PutObjectOptions{ContentType: "application/octet-stream"})
-		errChan <- err
-
-	}()
+	go server.mediaService.WriteObjectOnS3(stream.Context(), BUCKET_TEMP, uuidFile, pipeReader, errChan)
 
 	var size int64
 
@@ -107,17 +94,16 @@ func (server *StorageHandler) Upload(stream storagev1.StorageService_UploadServe
 			break
 		}
 
-		if novoRegistro == nil {
-			novoRegistro = registro.NewRegistroEvent(registro.RegistroMedia{
+		once.Do(func() {
+			novoCmd = registro.NewRegistroComando(registro.RegistroMedia{
 				UserId:    req.UserId,
 				FileId:    uuidFile,
 				Filename:  req.Filename,
 				MediaType: req.MediaType,
 				Mimetype:  req.Mimetype,
-				Metadata:  nil,
-				Bucket:    BUCKET_PHOTOS,
-				Size:      req.Size}, req.UserId)
-		}
+				Bucket:    BUCKET_TEMP,
+				Size:      req.Size}, req.UserId, CMD_UPLOAD)
+		})
 
 		n, err := pipeWriter.Write(req.Chunks)
 		if err != nil {
@@ -135,17 +121,17 @@ func (server *StorageHandler) Upload(stream storagev1.StorageService_UploadServe
 
 	log.Printf("Arquivo salvo com sucesso! Nome: %s , Tamanho: (%d bytes)", uuidFile, size)
 
-	evento, err := json.Marshal(*novoRegistro)
+	comando, err := json.Marshal(*novoCmd)
 	if err != nil {
 		log.Printf("Falha ao gerar mensagem de evento: %s", err)
 	}
 
 	server.kafkaProducer.Produce(&kafka.Message{
-		TopicPartition: kafka.TopicPartition{Topic: &REGISTRO_MEDIA, Partition: kafka.PartitionAny},
+		TopicPartition: kafka.TopicPartition{Topic: &REGISTRO_CMD, Partition: kafka.PartitionAny},
 		Key:            []byte(uuidFile),
-		Value:          evento}, nil)
+		Value:          comando}, nil)
 
 	return stream.SendAndClose(&storagev1.UploadResponse{
-		FileId: uuidFile,
-		Size:   int64(size)})
+		CmdId: novoCmd.CmdId,
+		Size:  int64(size)})
 }
