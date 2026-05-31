@@ -1,7 +1,7 @@
 package main
 
 import (
-	"context"
+	"flag"
 	"log"
 	"os"
 	"os/signal"
@@ -9,19 +9,9 @@ import (
 
 	"github.com/IBM/sarama"
 	consulta "github.com/MateusdiSousa/go-photos/processador/internal/consulta/domain"
-	"github.com/MateusdiSousa/go-photos/processador/internal/consulta/repository"
-	"github.com/MateusdiSousa/go-photos/processador/internal/database"
 )
 
 func main() {
-
-	// Conectando com postgres.
-	postgresConn := database.GetInstace()
-	consultaRepository, err := repository.NewConsultaRepository(postgresConn)
-	if err != nil {
-		log.Fatalf("Falha ao criar repositório de consulta: %s", err)
-	}
-
 	// Iniciando o Kafka
 	config := sarama.NewConfig()
 	config.Version = sarama.V4_2_0_0
@@ -39,35 +29,27 @@ func main() {
 
 	groupId := "go-photos-processors"
 
+	// Configurando cliente kafka
 	client, err := sarama.NewConsumerGroup(brokers, groupId, config)
 	if err != nil {
 		log.Fatalf("Falha ao criar grupo de consumo: %s", err)
 	}
 	defer client.Close()
 
-	consumer := consulta.NewConsumer(make(chan bool), consultaRepository) //
+	workerName := flag.String("processador", "consulta", "Qual processador será criado?")
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	switch *workerName {
+	case "consulta":
+		log.Println("Iniciando processador de consulta...")
 
-	go func() {
-		topicos := []string{"registro.media"}
-		for {
-			if err := client.Consume(ctx, topicos, consumer); err != nil {
-				log.Fatalf("Falha ao consumir dos tópicos Kafka: %s", err)
-			}
-
-			if ctx.Err() != nil {
-				return
-			}
-
-			consumer.Ready = make(chan bool)
+		err = consulta.InitConsultaWorker(client)
+		if err != nil {
+			log.Fatalf("Falha ao iniciar processador de consulta: %s", err)
 		}
-
-	}()
-
-	<-consumer.Ready
-	log.Println("Processador de consulta está rodando...")
+	default:
+		log.Printf("Não existe processador com o nome '%s'.")
+		os.Exit(0)
+	}
 
 	// Gracious Shutdown para parar o consumer sem corromper offsets
 	sigterm := make(chan os.Signal, 1)

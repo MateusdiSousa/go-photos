@@ -8,7 +8,47 @@ import (
 	"github.com/IBM/sarama"
 	registro "github.com/MateusdiSousa/go-photos/api/domain/registro"
 	"github.com/MateusdiSousa/go-photos/processador/internal/consulta/repository"
+	"github.com/MateusdiSousa/go-photos/processador/internal/database"
 )
+
+var TOPICOS_CONSULTA = []string{"registro.media"}
+
+func InitConsultaWorker(client sarama.ConsumerGroup) error {
+	postgresConn, err := database.GetInstace()
+	if err != nil {
+		log.Printf("Falha ao conectar com banco de dados: %s", err)
+		return err
+	}
+
+	consultaRepository, err := repository.NewConsultaRepository(postgresConn)
+	if err != nil {
+		log.Printf("Falha ao criar repositorio de consulta: %s", err)
+		return err
+	}
+
+	consumer := NewConsumer(make(chan bool), consultaRepository)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go func() {
+		for {
+			if err := client.Consume(ctx, TOPICOS_CONSULTA, consumer); err != nil {
+				log.Printf("Falha ao consumir dos tópicos Kafka: %s", err)
+			}
+
+			if ctx.Err() != nil {
+				return
+			}
+
+			consumer.Ready = make(chan bool)
+		}
+	}()
+
+	<-consumer.Ready
+
+	log.Println("Processador de consulta está rodando...")
+	return nil
+}
 
 type Consumer struct {
 	Ready      chan bool
