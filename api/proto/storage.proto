@@ -15,7 +15,7 @@ message UploadRequest {
 }
 
 message UploadResponse {
-  string file_id = 1;
+  string cmd_id = 1;
   int64 size = 2;
 }
 

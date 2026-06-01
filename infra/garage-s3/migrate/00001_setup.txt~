@@ -1,0 +1,5 @@
+create-cluster-layout
+apply-cluster-layout
+create-bucket photos
+create-key photos-key (deve printar no terminal a SECRET KEY E A ID_KEY)
+allow-bucket photos --read --write --key photos-ket

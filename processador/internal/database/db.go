@@ -3,21 +3,30 @@ package database
 import (
 	"context"
 	"log"
+	"sync"
 
 	"github.com/jackc/pgx/v5"
 )
 
-var instance *pgx.Conn = nil
+var (
+	once     sync.Once
+	instance *pgx.Conn = nil
+	URI                = "postgresql://postgres:example@localhost:5432/postgres"
+)
 
-const URI = "postgresql://postgres:example@localhost:5432/postgres"
+func GetInstace() (*pgx.Conn, error) {
+	var err error = nil
 
-func GetInstace() *pgx.Conn {
-	var err error
-	if instance == nil {
+	once.Do(func() {
+		log.Print("Conectando ao banco de dados postgres...")
 		instance, err = pgx.Connect(context.Background(), URI)
 		if err != nil {
-			log.Fatalf("Falha ao conectar ao banco de dados: %s", err)
+			log.Printf("Falha ao conectar ao banco de dados: %s", err)
 		}
+	})
+	if err != nil {
+		return nil, err
 	}
-	return instance
+
+	return instance, nil
 }

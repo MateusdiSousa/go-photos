@@ -74,5 +74,5 @@ func main() {
 		log.Fatalf("Erro ao fechar stream e receber resposta: %s", err)
 	}
 
-	log.Printf("Upload realizado com sucesso!, ID do arquivo salvo: %s", res.FileId)
+	log.Printf("Upload realizado com sucesso!, ID do arquivo salvo: %s", res.CmdId)
 }

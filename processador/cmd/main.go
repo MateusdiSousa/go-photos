@@ -2,29 +2,21 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/IBM/sarama"
-	consulta "github.com/MateusdiSousa/go-photos/processador/internal/consulta/domain"
-	"github.com/MateusdiSousa/go-photos/processador/internal/consulta/repository"
-	"github.com/MateusdiSousa/go-photos/processador/internal/database"
+	consulta_worker "github.com/MateusdiSousa/go-photos/processador/internal/consulta/worker"
+	registro_worker "github.com/MateusdiSousa/go-photos/processador/internal/registro/worker"
 )
 
 func main() {
-
-	// Conectando com postgres.
-	postgresConn := database.GetInstace()
-	consultaRepository, err := repository.NewConsultaRepository(postgresConn)
-	if err != nil {
-		log.Fatalf("Falha ao criar repositório de consulta: %s", err)
-	}
-
 	// Iniciando o Kafka
 	config := sarama.NewConfig()
-	config.Version = sarama.V4_2_0_0
+	config.Version = sarama.V3_6_0_0
 	config.Consumer.Offsets.Initial = sarama.OffsetOldest
 
 	// Configurações de Retentativa para o Coordinator
@@ -35,43 +27,47 @@ func main() {
 	// Garante que o grupo de consumidores vai esperar o coordinator estabilizar
 	//	config.Consumer.Group.Heartbeat.Interval = 3000
 
+	workerName := flag.String("proc", "consulta", "Qual processador será criado?")
+	flag.Parse()
+
 	brokers := []string{"localhost:9094"}
 
-	groupId := "go-photos-processors"
+	groupId := "go-photos-processors-" + *workerName
 
+	// Configurando cliente kafka
 	client, err := sarama.NewConsumerGroup(brokers, groupId, config)
 	if err != nil {
 		log.Fatalf("Falha ao criar grupo de consumo: %s", err)
 	}
 	defer client.Close()
 
-	consumer := consulta.NewConsumer(make(chan bool), consultaRepository) //
-
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	go func() {
-		topicos := []string{"registro.media"}
-		for {
-			if err := client.Consume(ctx, topicos, consumer); err != nil {
-				log.Fatalf("Falha ao consumir dos tópicos Kafka: %s", err)
-			}
-
-			if ctx.Err() != nil {
-				return
-			}
-
-			consumer.Ready = make(chan bool)
+	switch *workerName {
+	case "consulta":
+		log.Println("Iniciando processador de consulta...")
+		err = consulta_worker.InitConsultaWorker(ctx, client)
+		if err != nil {
+			log.Fatalf("Falha ao iniciar processador de consulta: %s", err)
 		}
 
-	}()
+	case "registro":
+		log.Println("Iniciando processador de registro...")
+		err = registro_worker.InitRegistroWorker(ctx, client)
+		if err != nil {
+			log.Fatalf("Falha ao iniciar processador de registro: %s", err)
+		}
 
-	<-consumer.Ready
-	log.Println("Processador de consulta está rodando...")
+	default:
+		log.Printf("Não existe processador com o nome '%s'.")
+		os.Exit(0)
+	}
 
 	// Gracious Shutdown para parar o consumer sem corromper offsets
 	sigterm := make(chan os.Signal, 1)
 	signal.Notify(sigterm, syscall.SIGINT, syscall.SIGTERM)
 	<-sigterm
 	log.Println("Encerrando o processador de forma segura...")
+
 }

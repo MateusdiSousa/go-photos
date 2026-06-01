@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"net/url"
 	"time"
@@ -27,6 +28,12 @@ func NewMediaService(repository *repository.MediaRepository, minioClient *minio.
 		repository:  repository,
 		minioClient: minioClient,
 	}
+}
+
+func (s *MediaService) WriteObjectOnS3(ctx context.Context, bucket string, uuidFile string, pipeReader *io.PipeReader, errChan chan error) {
+	defer pipeReader.Close()
+	_, err := s.minioClient.PutObject(ctx, bucket, uuidFile, pipeReader, -1, minio.PutObjectOptions{ContentType: "application/octet-stream"})
+	errChan <- err
 }
 
 func (service *MediaService) GetMediaPaged(ctx context.Context, userId string, pageSize int, pageNumber int) ([]*registro.RegistroMedia, error) {
