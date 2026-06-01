@@ -14,4 +14,4 @@ CREATE TABLE consulta.registro_media (
 
 -- Índices essenciais para performance no seu App de fotos
 CREATE INDEX idx_media_user_created ON consulta.registro_media (user_id, created_at DESC);
-CREATE INDEX idx_media_metadata ON connsulta.registro_media USING gin (metadata);
+CREATE INDEX idx_media_metadata ON consulta.registro_media USING gin (metadata);

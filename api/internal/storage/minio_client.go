@@ -2,32 +2,46 @@ package storage
 
 import (
 	"log"
+	"os"
+	"sync"
 
+	"github.com/joho/godotenv"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
 var (
+	once         sync.Once
 	clientMinio  *minio.Client = nil
 	ENDPOINT                   = "localhost:3900"
-	ACESS_KEY_ID               = "GK646ccdc35a5b43a4c1d63e7f"
-	SECRET_KEY                 = "3c3e4403806b1bb54d66f485caabafb7baebc31181550243fc443d5a2f5cd52d"
+	ACESS_KEY_ID               = godotenv.Load()
+	SECRET_KEY                 = "9d7d8172e57e2690e5bf52040bf644be59e95c2449d6ef573fed96108de4a030"
 )
 
-func GetClientMinio() *minio.Client {
+func GetClientMinio() (*minio.Client, error) {
 	var err error = nil
-	if clientMinio == nil {
-		log.Printf("Conectando ao cliente S3...")
+
+	once.Do(func() {
+		log.Print("Carregando variáveis de ambiente...")
+
+		err = godotenv.Load()
+		if err != nil {
+			log.Printf("Falha ao carregar arquivo .env")
+		}
+
+		log.Print("Conectando ao cliente S3...")
 
 		clientMinio, err = minio.New(ENDPOINT, &minio.Options{
 			Secure: false,
-			Creds:  credentials.NewStaticV4(ACESS_KEY_ID, SECRET_KEY, ""),
+			Creds:  credentials.NewStaticV4(os.Getenv("ID_KEY_TEMP_KEY"), os.Getenv("SECRET_KEY_TEMP_KEY"), ""),
 		})
-
 		if err != nil {
-			log.Fatalf("Falha ao conectar com o servidor S3: %s", err)
+			log.Printf("Falha ao conectar com o servidor S3: %s", err)
 		}
-		return clientMinio
+	})
+
+	if err != nil {
+		return nil, err
 	}
-	return clientMinio
+	return clientMinio, nil
 }

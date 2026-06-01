@@ -1,4 +1,16 @@
 services:
+  postgres:
+    image: postgres
+    restart: always
+    shm_size: 128mb
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: "example"
+      POSTGRES_USER: "postgres"
+    ports:
+    - "5432:5432"
+    
   kafka:
     image: apache/kafka:4.2.0
     container_name: kafka
@@ -25,7 +37,7 @@ services:
 
       - ALLOW_PLAINTEXT_LISTENER=yes
     volumes:
-      - kafka_data:/bitnami/kafka
+      - ./kafka/kafka_data:/tmp/kafka-logs
     # Interface visual opcional para ver as mensagens e tópicos
 
   kafka-ui:
@@ -36,6 +48,24 @@ services:
     environment:
       - KAFKA_CLUSTERS_0_NAME=local
       - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
-    
+
+  garage1:
+    image: dxflrs/garage:v2.3.0
+    container_name: garage
+    hostname: garage
+    restart: unless-stopped
+    ports:
+      - "3900:3900" # API S3 acessível pela sua App
+      - "3902:3902" # Console WEB
+      - "3903:3903" # Admin API
+    volumes:
+      - ./garage-s3/data:/var/lib/garage
+      - ./garage-s3/garage.toml:/etc/garage.toml
+    environment:
+      - GARAGE_CONFIG=/etc/garage.toml
+      - GARAGE_RPC_SECRET=${GARAGE_RPC_SECRET}
+      - GARAGE_ADMIN_TOKEN=${GARAGE_ADMIN_TOKEN}
+      - GARAGE_METRICS_TOKEN=${GARAGE_METRICS_TOKEN}
+
 volumes:
- kafka_data:
+  pgdata:

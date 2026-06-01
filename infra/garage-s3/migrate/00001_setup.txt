@@ -1,0 +1,3 @@
+create-bucket photos
+create-key photos-key
+allow-bucket photos --read --write --key photos-key
