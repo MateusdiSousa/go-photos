@@ -44,8 +44,7 @@ func (r *ConsultaRepository) SaveRegistroMedia(ctx context.Context, registroMedi
 		registroMedia.Mimetype,
 		registroMedia.Size,
 		registroMedia.Bucket,
-		"",
-	)
+		registroMedia.Metadata)
 	if err != nil {
 		return fmt.Errorf("Falha ao executar query 'save_registro_media': %s", err)
 	}

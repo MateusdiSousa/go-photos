@@ -1,3 +1,0 @@
-create-bucket temp-media
-create-key temp-key 
-allow-bucket temp-media --read --write --key temp-key

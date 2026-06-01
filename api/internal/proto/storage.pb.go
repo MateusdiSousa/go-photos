@@ -115,7 +115,7 @@ func (x *UploadRequest) GetChunks() []byte {
 
 type UploadResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	CmdId         string                 `protobuf:"bytes,1,opt,name=cmd_id,json=cmdId,proto3" json:"cmd_id,omitempty"`
+	FileId        string                 `protobuf:"bytes,1,opt,name=file_id,json=fileId,proto3" json:"file_id,omitempty"`
 	Size          int64                  `protobuf:"varint,2,opt,name=size,proto3" json:"size,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -151,9 +151,9 @@ func (*UploadResponse) Descriptor() ([]byte, []int) {
 	return file_storage_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *UploadResponse) GetCmdId() string {
+func (x *UploadResponse) GetFileId() string {
 	if x != nil {
-		return x.CmdId
+		return x.FileId
 	}
 	return ""
 }
@@ -359,9 +359,9 @@ const file_storage_proto_rawDesc = "" +
 	"\bmimetype\x18\x04 \x01(\tR\bmimetype\x12\x1c\n" +
 	"\tmetadados\x18\x05 \x01(\tR\tmetadados\x12\x12\n" +
 	"\x04size\x18\x06 \x01(\x03R\x04size\x12\x16\n" +
-	"\x06chunks\x18\a \x01(\fR\x06chunks\";\n" +
-	"\x0eUploadResponse\x12\x15\n" +
-	"\x06cmd_id\x18\x01 \x01(\tR\x05cmdId\x12\x12\n" +
+	"\x06chunks\x18\a \x01(\fR\x06chunks\"=\n" +
+	"\x0eUploadResponse\x12\x17\n" +
+	"\afile_id\x18\x01 \x01(\tR\x06fileId\x12\x12\n" +
 	"\x04size\x18\x02 \x01(\x03R\x04size\"b\n" +
 	"\x0fGetMediaRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1b\n" +

@@ -1,1 +1,0 @@
-create-topic -particao 3 -retencao 7 -replicacao 1 -nome registro.comando
