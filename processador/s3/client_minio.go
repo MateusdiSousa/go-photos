@@ -71,7 +71,7 @@ func getClientBucketPhotos() (*minio.Client, error) {
 	var err error = nil
 
 	if clientBucketPhotos == nil {
-		clientBucketPhotos, err = getClientMinio(TEMP_PHOTOS)
+		clientBucketPhotos, err = getClientMinio(BUCKET_PHOTOS)
 	}
 
 	if err != nil {
@@ -86,7 +86,7 @@ func getClientBucketThumbnail() (*minio.Client, error) {
 	var err error = nil
 
 	if clientBucketThumbnails == nil {
-		clientBucketThumbnails, err = getClientMinio(TEMP_PHOTOS)
+		clientBucketThumbnails, err = getClientMinio(BUCKET_THUMBNAILS)
 	}
 
 	if err != nil {
@@ -97,13 +97,13 @@ func getClientBucketThumbnail() (*minio.Client, error) {
 	return clientBucketThumbnails, nil
 }
 
-func AddPhotoBucketPhotos(ctx context.Context, media registro.RegistroMedia, r io.Reader) error {
+func AddPhotoBucketPhotos(ctx context.Context, media registro.RegistroMedia, size int64, r io.Reader) error {
 	client, err := getClientBucketPhotos()
 	if err != nil {
 		return fmt.Errorf("Falha ao criar cliente S3: %s", err)
 	}
 
-	_, err = client.PutObject(ctx, media.Bucket, media.HashSha256, r, media.Size, minio.PutObjectOptions{})
+	_, err = client.PutObject(ctx, "photos", media.FileId, r, size, minio.PutObjectOptions{})
 	if err != nil {
 		return err
 	}
@@ -111,13 +111,13 @@ func AddPhotoBucketPhotos(ctx context.Context, media registro.RegistroMedia, r i
 	return nil
 }
 
-func AddThumbnail(ctx context.Context, hash string, size int64, r io.Reader) error {
+func AddThumbnail(ctx context.Context, media registro.RegistroMedia, size int64, r io.Reader) error {
 	client, err := getClientBucketThumbnail()
 	if err != nil {
 		return fmt.Errorf("Falha ao criar cliente S3: %s", err)
 	}
 
-	_, err = client.PutObject(ctx, "thumbnail", hash, r, size, minio.PutObjectOptions{})
+	_, err = client.PutObject(ctx, "thumbnails", media.FileId, r, size, minio.PutObjectOptions{})
 	if err != nil {
 		return err
 	}

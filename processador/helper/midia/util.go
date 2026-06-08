@@ -16,13 +16,14 @@ import (
 	"github.com/chai2010/webp"
 	"github.com/disintegration/imaging"
 	"github.com/evanoberholster/imagemeta"
+	"github.com/vegidio/heif-go"
 
 	"github.com/dsoprea/go-exif/v3"
 	exifcommon "github.com/dsoprea/go-exif/v3/common"
 
-	"github.com/rwcarlsen/goexif/exif"
+	//	"github.com/rwcarlsen/goexif/exif"
 
-	"github.com/photoprism/photoprism/pkg/media/heif"
+	// "github.com/photoprism/photoprism/pkg/media/heif"
 
 	"github.com/MateusdiSousa/go-photos/api/domain/registro"
 )

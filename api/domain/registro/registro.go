@@ -22,17 +22,35 @@ type RegistroMedia struct {
 	FilePath      string `db:"file_path" json:"file-path"`
 }
 
-type RegistroComando struct {
-	CmdId     string        `json:"cmd-id"`
-	Cadastro  RegistroMedia `json:"cadastro"`
-	TipoCmd   string        `json:"tipo-cmd"`
-	Status    string        `json:"status"`
-	UserId    string        `json:"user-id"`
-	CreatedAt time.Time     `json:"created-at"`
+type Evento[T any] struct {
+	EventId   string    `json:"event-id"`
+	EventType string    `json:"event-type"`
+	UserId    string    `json:"user-id"`
+	Dados     T         `json:"dados"`
+	CreatedAt time.Time `json:"created-at"`
 }
 
-func NewRegistroComando(cadastro RegistroMedia, userId string, tipoComando string) *RegistroComando {
-	return &RegistroComando{
+type Comando[T any] struct {
+	CmdId     string    `json:"cmd-id"`
+	Cadastro  T         `json:"cadastro"`
+	TipoCmd   string    `json:"tipo-cmd"`
+	Status    string    `json:"status"`
+	UserId    string    `json:"user-id"`
+	CreatedAt time.Time `json:"created-at"`
+	Erros     []string  `json:"erros"`
+}
+
+func NewEvent[T any](dados T, userId string, tipoEvento string) *Evento[T] {
+	return &Evento[T]{
+		Dados:     dados,
+		EventId:   uuid.NewString(),
+		EventType: tipoEvento,
+		CreatedAt: time.Now(),
+	}
+}
+
+func NewComando[T any](cadastro T, userId string, tipoComando string) *Comando[T] {
+	return &Comando[T]{
 		Cadastro:  cadastro,
 		CreatedAt: time.Now(),
 		UserId:    userId,
