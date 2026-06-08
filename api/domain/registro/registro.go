@@ -7,19 +7,18 @@ import (
 )
 
 type RegistroMedia struct {
-	FileId    string                 `db:"file_id" json:"file-id"`
-	UserId    string                 `db:"user_id" json:"user-id"`
-	Filename  string                 `db:"filename" json:"filename"`
-	MediaType string                 `db:"media_type" json:"media-type"`
-	Mimetype  string                 `db:"mime_type" json:"mime-type"`
-	Metadata  map[string]interface{} `db:"metadata" json:"metadata"`
-	Size      int64                  `db:"file_size" json:"size"`
-	Bucket    string                 `db:"bucket" json:"bucket"`
-	CreatedAt time.Time              `db:"created_at" json:"created-at"`
-	// db:"-" avisa ao pgx para ignorar, já que essa coluna não existe fisicamente na tabela
-	HashSha256    string `db:"hash_sha256" json:"hash-sha256"`
-	ThumbnailPath string `db:"thumbnail_path" json:"thumbnail-path"`
-	FilePath      string `db:"file_path" json:"file-path"`
+	FileId        string                 `db:"file_id" json:"file-id"`
+	UserId        string                 `db:"user_id" json:"user-id"`
+	Filename      string                 `db:"filename" json:"filename"`
+	MediaType     string                 `db:"media_type" json:"media-type"`
+	Mimetype      string                 `db:"mime_type" json:"mime-type"`
+	Metadata      map[string]interface{} `db:"metadata" json:"metadata"`
+	Size          int64                  `db:"file_size" json:"size"`
+	Bucket        string                 `db:"bucket" json:"bucket"`
+	CreatedAt     time.Time              `db:"created_at" json:"created-at"`
+	HashSha256    string                 `db:"hash_sha256" json:"hash-sha256"`
+	ThumbnailPath string                 `db:"thumbnail_path" json:"thumbnail-path"`
+	FilePath      string                 `db:"file_path" json:"file-path"`
 }
 
 type Evento[T any] struct {
