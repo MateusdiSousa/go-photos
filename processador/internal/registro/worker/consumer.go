@@ -10,19 +10,17 @@ import (
 	"github.com/MateusdiSousa/go-photos/api/domain/registro"
 	registro_model "github.com/MateusdiSousa/go-photos/processador/internal/registro/model"
 	"github.com/MateusdiSousa/go-photos/processador/model"
-	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
 var TOPICOS_REGISTRO = []string{"registro.comando"}
 
 type Consumer struct {
-	Ready    chan bool
-	Producer *kafka.Producer
+	Ready chan bool
 }
 
-func InitRegistroWorker(ctx context.Context, client sarama.ConsumerGroup, p *kafka.Producer) error {
+func InitRegistroWorker(ctx context.Context, client sarama.ConsumerGroup) error {
 	registro_model.SetupRegistroModel()
-	consumer := NewConsumer(make(chan bool), p)
+	consumer := NewConsumer(make(chan bool))
 
 	go func() {
 		for {
@@ -44,17 +42,16 @@ func InitRegistroWorker(ctx context.Context, client sarama.ConsumerGroup, p *kaf
 	return nil
 }
 
-func NewConsumer(channel chan bool, p *kafka.Producer) *Consumer {
+func NewConsumer(channel chan bool) *Consumer {
 	return &Consumer{
-		Ready:    channel,
-		Producer: p,
+		Ready: channel,
 	}
 }
 
 func (c *Consumer) ProcessMessage(msg *sarama.ConsumerMessage) error {
 	switch msg.Topic {
 	case "registro.comando":
-		var comando registro.Comando[registro.RegistroMedia]
+		var comando registro.RegistroComando
 		err := json.Unmarshal(msg.Value, &comando)
 		if err != nil {
 			return fmt.Errorf("Falha ao converter a mensagem: %s", err)
@@ -67,9 +64,8 @@ func (c *Consumer) ProcessMessage(msg *sarama.ConsumerMessage) error {
 			log.Println("Não implementado ainda.")
 			// Caso seja executado, gerar evento de registro.media e atualizar o banco de dados de registro
 		case "pendente":
-			if err := model.Executa(context.Background(), comando.TipoCmd, msg, c.Producer); err != nil {
-				log.Println(err.Error())
-				return sarama.ErrInvalidMessage
+			if err := model.Executa(context.Background(), comando.TipoCmd, msg); err != nil {
+				log.Printf("Falha ao processar mensagem: %s", err)
 			}
 		}
 	default:
