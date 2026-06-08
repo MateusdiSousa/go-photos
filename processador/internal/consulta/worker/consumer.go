@@ -60,7 +60,7 @@ func NewConsumer(channel chan bool, repo *repository.ConsultaRepository) *Consum
 }
 
 func (c *Consumer) ProcessMessage(message []byte) error {
-	var data registro.RegistroComando
+	var data registro.Comando[registro.RegistroMedia]
 	err := json.Unmarshal(message, &data)
 	if err != nil {
 		log.Printf("Falha ao converter mensagem: %s", err)
