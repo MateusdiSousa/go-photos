@@ -75,7 +75,7 @@ func (server *StorageHandler) Upload(stream storagev1.StorageService_UploadServe
 
 	errChan := make(chan error, 1)
 
-	var novoCmd *registro.RegistroComando = nil
+	var novoCmd *registro.Comando[registro.RegistroMedia] = nil
 
 	go server.mediaService.WriteObjectOnS3(stream.Context(), BUCKET_TEMP, uuidFile, pipeReader, errChan)
 
@@ -95,7 +95,7 @@ func (server *StorageHandler) Upload(stream storagev1.StorageService_UploadServe
 		}
 
 		once.Do(func() {
-			novoCmd = registro.NewRegistroComando(registro.RegistroMedia{
+			novoCmd = registro.NewComando(registro.RegistroMedia{
 				UserId:    req.UserId,
 				FileId:    uuidFile,
 				Filename:  req.Filename,
