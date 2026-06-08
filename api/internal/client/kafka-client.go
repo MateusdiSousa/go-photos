@@ -18,7 +18,8 @@ func GetKafkaProducer() *kafka.Producer {
 	if kafkaClient == nil {
 		kafkaClient, err = kafka.NewProducer(&kafka.ConfigMap{
 			"bootstrap.servers": server,
-			"client.id":         clientId})
+			"client.id":         clientId,
+			"acks":              acks})
 		if err != nil {
 			log.Fatalf("Falha ao criar produtor kafka: %s", err)
 			os.Exit(1)

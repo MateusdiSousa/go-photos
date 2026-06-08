@@ -11,7 +11,6 @@ import (
 	"github.com/IBM/sarama"
 	consulta_worker "github.com/MateusdiSousa/go-photos/processador/internal/consulta/worker"
 	registro_worker "github.com/MateusdiSousa/go-photos/processador/internal/registro/worker"
-	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
 func main() {
@@ -55,14 +54,7 @@ func main() {
 
 	case "registro":
 		log.Println("Iniciando processador de registro...")
-		p, err := kafka.NewProducer(&kafka.ConfigMap{
-			"bootstrap.servers": brokers[0],
-			"group.id":          groupId,
-		})
-		if err != nil {
-			log.Fatalf("Falha ao iniciar processador de registro: %s", err)
-		}
-		err = registro_worker.InitRegistroWorker(ctx, client, p)
+		err = registro_worker.InitRegistroWorker(ctx, client)
 		if err != nil {
 			log.Fatalf("Falha ao iniciar processador de registro: %s", err)
 		}
