@@ -31,6 +31,7 @@ message MediaInfo {
   string created_at = 3;
   string metadata = 4;
   string url = 5;
+  string thumbnail = 6;
 }
 
 message GetMediaResponse {

@@ -66,7 +66,6 @@ func main() {
 			log.Fatalf("Erro ao fazer stream do arquivo de teste: %s", err)
 		}
 
-		log.Printf("Enviado chunk de %d bytes", n)
 	}
 
 	res, err := stream.CloseAndRecv()

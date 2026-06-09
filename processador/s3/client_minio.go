@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/MateusdiSousa/go-photos/api/domain/registro"
 	"github.com/joho/godotenv"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -97,13 +96,26 @@ func getClientBucketThumbnail() (*minio.Client, error) {
 	return clientBucketThumbnails, nil
 }
 
-func AddPhotoBucketPhotos(ctx context.Context, media registro.RegistroMedia, size int64, r io.Reader) error {
+func objectExiste(ctx context.Context, c *minio.Client, bucketName string, filename string) (bool, error) {
+	_, err := c.StatObject(ctx, bucketName, filename, minio.StatObjectOptions{})
+	if err != nil {
+		errResponse := minio.ToErrorResponse(err)
+		// Status Code 404 == Not Found
+		if errResponse.StatusCode == 404 {
+			return false, nil
+		}
+		return false, fmt.Errorf("Falha ao verificar se objeto existe: %s", err)
+	}
+	return true, nil
+}
+
+func AddPhotoBucketPhotos(ctx context.Context, filename string, size int64, r io.Reader) error {
 	client, err := getClientBucketPhotos()
 	if err != nil {
 		return fmt.Errorf("Falha ao criar cliente S3: %s", err)
 	}
 
-	_, err = client.PutObject(ctx, "photos", media.FileId, r, size, minio.PutObjectOptions{})
+	_, err = client.PutObject(ctx, "photos", filename, r, size, minio.PutObjectOptions{})
 	if err != nil {
 		return err
 	}
@@ -111,13 +123,13 @@ func AddPhotoBucketPhotos(ctx context.Context, media registro.RegistroMedia, siz
 	return nil
 }
 
-func AddThumbnail(ctx context.Context, media registro.RegistroMedia, size int64, r io.Reader) error {
+func AddThumbnail(ctx context.Context, filename string, size int64, r io.Reader) error {
 	client, err := getClientBucketThumbnail()
 	if err != nil {
 		return fmt.Errorf("Falha ao criar cliente S3: %s", err)
 	}
 
-	_, err = client.PutObject(ctx, "thumbnails", media.FileId, r, size, minio.PutObjectOptions{})
+	_, err = client.PutObject(ctx, "thumbnails", filename, r, size, minio.PutObjectOptions{})
 	if err != nil {
 		return err
 	}
@@ -137,4 +149,32 @@ func GetTempMedia(ctx context.Context, bucketName string, fileId string) (*minio
 	}
 
 	return media, nil
+}
+
+func PhotoExiste(ctx context.Context, hash string) (bool, error) {
+	clientPhoto, err := getClientBucketPhotos()
+	if err != nil {
+		return false, fmt.Errorf("Falha ao criar cliente S3: %s", err)
+	}
+
+	exists, err := objectExiste(ctx, clientPhoto, BUCKET_PHOTOS, hash)
+	if err != nil {
+		return false, err
+	}
+
+	return exists, nil
+}
+
+func ThumbnailExiste(ctx context.Context, hash string) (bool, error) {
+	clientPhoto, err := getClientBucketThumbnail()
+	if err != nil {
+		return false, fmt.Errorf("Falha ao criar cliente S3: %s", err)
+	}
+
+	exists, err := objectExiste(ctx, clientPhoto, BUCKET_THUMBNAILS, hash)
+	if err != nil {
+		return false, err
+	}
+
+	return exists, nil
 }

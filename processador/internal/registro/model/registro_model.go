@@ -55,51 +55,61 @@ func registroUpload(ctx context.Context, msg *sarama.ConsumerMessage, cmd *regis
 	}
 	r.Seek(0, io.SeekStart)
 
-	imageFormat, err := helper_media.DetectImageFormat(r)
+	hashImagemS := hex.EncodeToString(hashImagem)
+
+	photoExiste, err := storage.PhotoExiste(ctx, hashImagemS)
 	if err != nil {
 		return nil, []model.MensagemKafka{
 			model.NewMensagemKafkaRejeitada(cmd, topico, chave, err),
 		}
 	}
-	r.Seek(0, io.SeekStart)
 
-	thumbnail, err := helper_media.GenerateThumbnailGeneric(r, imageFormat)
-	if err != nil {
-		return nil, []model.MensagemKafka{
-			model.NewMensagemKafkaRejeitada(cmd, topico, chave, err),
+	if !photoExiste {
+		imageFormat, err := helper_media.DetectImageFormat(r)
+		if err != nil {
+			return nil, []model.MensagemKafka{
+				model.NewMensagemKafkaRejeitada(cmd, topico, chave, err)}
 		}
-	}
-	r.Seek(0, io.SeekStart)
+		r.Seek(0, io.SeekStart)
 
-	data, err := io.ReadAll(r)
-	if err != nil {
-		log.Printf("Falha ao ler dados do buffer da foto.")
-		ctx.Err()
-		return nil, []model.MensagemKafka{
-			model.NewMensagemKafkaRejeitada(cmd, topico, chave, err),
+		thumbnail, err := helper_media.GenerateThumbnailGeneric(r, imageFormat)
+		if err != nil {
+			return nil, []model.MensagemKafka{
+				model.NewMensagemKafkaRejeitada(cmd, topico, chave, err),
+			}
 		}
-	}
-	rPhoto := bytes.NewReader(data)
+		r.Seek(0, io.SeekStart)
 
-	err = storage.AddPhotoBucketPhotos(ctx, cmd.Cadastro, int64(len(data)), rPhoto)
-	if err != nil {
-		log.Printf("Falha ao adicionar imagem ao bucket de fotos: %s", err)
-		return nil, []model.MensagemKafka{
-			model.NewMensagemKafkaRejeitada(cmd, topico, chave, err),
+		data, err := io.ReadAll(r)
+		if err != nil {
+			log.Printf("Falha ao ler dados do buffer da foto.")
+			ctx.Err()
+			return nil, []model.MensagemKafka{
+				model.NewMensagemKafkaRejeitada(cmd, topico, chave, err),
+			}
 		}
-	}
+		rPhoto := bytes.NewReader(data)
 
-	err = storage.AddThumbnail(ctx, cmd.Cadastro, int64(len(thumbnail)), bytes.NewReader(thumbnail))
-	if err != nil {
-		log.Printf("Falha ao adicionar imagem ao bucket de thumbnails: %s", err)
-		return nil, []model.MensagemKafka{
-			model.NewMensagemKafkaRejeitada(cmd, topico, chave, err),
+		err = storage.AddPhotoBucketPhotos(ctx, hashImagemS, int64(len(data)), rPhoto)
+		if err != nil {
+			log.Printf("Falha ao adicionar imagem ao bucket de fotos: %s", err)
+			return nil, []model.MensagemKafka{
+				model.NewMensagemKafkaRejeitada(cmd, topico, chave, err),
+			}
+		}
+
+		err = storage.AddThumbnail(ctx, hashImagemS, int64(len(thumbnail)), bytes.NewReader(thumbnail))
+		if err != nil {
+			log.Printf("Falha ao adicionar imagem ao bucket de thumbnails: %s", err)
+			return nil, []model.MensagemKafka{
+				model.NewMensagemKafkaRejeitada(cmd, topico, chave, err),
+			}
 		}
 	}
 
 	cmd.Cadastro.Bucket = "photos"
 	cmd.Status = "executado"
-	cmd.Cadastro.HashSha256 = hex.EncodeToString(hashImagem)
+	cmd.Cadastro.HashSha256 = hashImagemS
 	cmd.Cadastro.Metadata = map[string]any{
 		"data-criacao":  metadados.DataCriacao,
 		"modelo-camera": metadados.ModeloCamera,

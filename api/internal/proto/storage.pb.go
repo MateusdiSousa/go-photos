@@ -232,6 +232,7 @@ type MediaInfo struct {
 	CreatedAt     string                 `protobuf:"bytes,3,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	Metadata      string                 `protobuf:"bytes,4,opt,name=metadata,proto3" json:"metadata,omitempty"`
 	Url           string                 `protobuf:"bytes,5,opt,name=url,proto3" json:"url,omitempty"`
+	Thumbnail     string                 `protobuf:"bytes,6,opt,name=thumbnail,proto3" json:"thumbnail,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -301,6 +302,13 @@ func (x *MediaInfo) GetUrl() string {
 	return ""
 }
 
+func (x *MediaInfo) GetThumbnail() string {
+	if x != nil {
+		return x.Thumbnail
+	}
+	return ""
+}
+
 type GetMediaResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	MediaUrls     []*MediaInfo           `protobuf:"bytes,1,rep,name=media_urls,json=mediaUrls,proto3" json:"media_urls,omitempty"`
@@ -366,7 +374,7 @@ const file_storage_proto_rawDesc = "" +
 	"\x0fGetMediaRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1b\n" +
 	"\tpage_size\x18\x02 \x01(\x03R\bpageSize\x12\x19\n" +
-	"\bpage_num\x18\x03 \x01(\x03R\apageNum\"\x93\x01\n" +
+	"\bpage_num\x18\x03 \x01(\x03R\apageNum\"\xb1\x01\n" +
 	"\tMediaInfo\x12\x1a\n" +
 	"\bfilename\x18\x01 \x01(\tR\bfilename\x12\x1d\n" +
 	"\n" +
@@ -374,7 +382,8 @@ const file_storage_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\x03 \x01(\tR\tcreatedAt\x12\x1a\n" +
 	"\bmetadata\x18\x04 \x01(\tR\bmetadata\x12\x10\n" +
-	"\x03url\x18\x05 \x01(\tR\x03url\"H\n" +
+	"\x03url\x18\x05 \x01(\tR\x03url\x12\x1c\n" +
+	"\tthumbnail\x18\x06 \x01(\tR\tthumbnail\"H\n" +
 	"\x10GetMediaResponse\x124\n" +
 	"\n" +
 	"media_urls\x18\x01 \x03(\v2\x15.storage.v1.MediaInfoR\tmediaUrls2\x9a\x01\n" +
