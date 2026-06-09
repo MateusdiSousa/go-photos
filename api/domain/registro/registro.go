@@ -1,25 +1,44 @@
 package registro
 
 import (
+	"database/sql/driver"
+	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
 )
 
+type JSONB map[string]interface{}
+
+func (j JSONB) Value() (driver.Value, error) {
+	return json.Marshal(j)
+}
+
+func (j *JSONB) Scan(value interface{}) error {
+	if value == nil {
+		return nil
+	}
+	b, ok := value.([]byte)
+	if !ok {
+		return errors.New("type assertion to []byte failed")
+	}
+	return json.Unmarshal(b, j)
+}
+
 type RegistroMedia struct {
-	FileId    string                 `db:"file_id" json:"file-id"`
-	UserId    string                 `db:"user_id" json:"user-id"`
-	Filename  string                 `db:"filename" json:"filename"`
-	MediaType string                 `db:"media_type" json:"media-type"`
-	Mimetype  string                 `db:"mime_type" json:"mime-type"`
-	Metadata  map[string]interface{} `db:"metadata" json:"metadata"`
-	Size      int64                  `db:"file_size" json:"size"`
-	Bucket    string                 `db:"bucket" json:"bucket"`
-	CreatedAt time.Time              `db:"created_at" json:"created-at"`
-	// db:"-" avisa ao pgx para ignorar, já que essa coluna não existe fisicamente na tabela
-	HashSha256    string `db:"hash_sha256" json:"hash-sha256"`
-	ThumbnailPath string `db:"thumbnail_path" json:"thumbnail-path"`
-	FilePath      string `db:"file_path" json:"file-path"`
+	FileId        string    `db:"file_id" json:"file-id"`
+	UserId        string    `db:"user_id" json:"user-id"`
+	Filename      string    `db:"filename" json:"filename"`
+	MediaType     string    `db:"media_type" json:"media-type"`
+	Mimetype      string    `db:"mime_type" json:"mime-type"`
+	Metadata      JSONB     `db:"metadata" json:"metadata"`
+	Size          int64     `db:"file_size" json:"size"`
+	Bucket        string    `db:"bucket" json:"bucket"`
+	CreatedAt     time.Time `db:"created_at" json:"created-at"`
+	HashSha256    string    `db:"hash_sha256" json:"hash-sha256"`
+	ThumbnailPath *string   `db:"thumbnail_path" json:"thumbnail-path"`
+	FilePath      *string   `db:"file_path" json:"file-path"`
 }
 
 type Evento[T any] struct {

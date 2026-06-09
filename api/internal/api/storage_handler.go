@@ -42,13 +42,16 @@ func NewStorageHandler(clientMinio *minio.Client, kafkaProducer *kafka.Producer,
 func RegistroMediaToMediaInfo(registros []*registro.RegistroMedia) []*storagev1.MediaInfo {
 	quantidadeRegistro := len(registros)
 	mediaInfo := make([]*storagev1.MediaInfo, quantidadeRegistro)
+
 	for index, registro := range registros {
+		metadata, _ := json.Marshal(registro.Metadata)
 		mediaInfo[index] = &storagev1.MediaInfo{
 			Filename:  registro.Filename,
-			MediaType: registro.MediaType,
+			MediaType: registro.Mimetype,
 			CreatedAt: registro.CreatedAt.String(),
-			Metadata:  "",
-			Url:       registro.FilePath,
+			Metadata:  string(metadata),
+			Url:       *registro.FilePath,
+			Thumbnail: *registro.ThumbnailPath,
 		}
 	}
 
@@ -110,7 +113,6 @@ func (server *StorageHandler) Upload(stream storagev1.StorageService_UploadServe
 			log.Printf("Falha ao escrever bytes no buffer: %s", err)
 		}
 
-		log.Printf("Quantidade de bytes escritos: %d bytes", n)
 		size += int64(n)
 	}
 

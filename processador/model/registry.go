@@ -68,15 +68,17 @@ func Executa(ctx context.Context, commandName string, msg *sarama.ConsumerMessag
 }
 
 func EnviarMensagens(ctx context.Context, mensagens []MensagemKafka, producer *kafka.Producer) {
-	for _, evento := range mensagens {
-		err := producer.Produce(&kafka.Message{
-			TopicPartition: kafka.TopicPartition{Topic: &evento.Topic, Partition: kafka.PartitionAny},
-			Key:            []byte(evento.Key),
-			Value:          evento.Mensagem,
-		}, nil)
-		if err != nil {
-			log.Errorf("Erro ao publicar mensagem para o tópico kafka %s: %s", evento.Topic, evento.Mensagem)
-			ctx.Err()
+	if producer != nil {
+		for _, evento := range mensagens {
+			err := producer.Produce(&kafka.Message{
+				TopicPartition: kafka.TopicPartition{Topic: &evento.Topic, Partition: kafka.PartitionAny},
+				Key:            []byte(evento.Key),
+				Value:          evento.Mensagem,
+			}, nil)
+			if err != nil {
+				log.Errorf("Erro ao publicar mensagem para o tópico kafka %s: %s", evento.Topic, evento.Mensagem)
+				ctx.Err()
+			}
 		}
 	}
 }
