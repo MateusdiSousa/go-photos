@@ -68,7 +68,7 @@ func main() {
 		}
 
 	default:
-		log.Printf("Não existe processador com o nome '%s'.")
+		log.Printf("Não existe processador com o nome '%s'.", *workerName)
 		os.Exit(0)
 	}
 

@@ -61,7 +61,8 @@ func (service *MediaService) GetMediaPaged(ctx context.Context, userId string, p
 		}
 
 		log.Printf("URL gerada para arquivo: %s", media.FileId)
-		media.FilePath = objectFile.String()
+		filepath := objectFile.String()
+		media.FilePath = &filepath
 
 	}
 

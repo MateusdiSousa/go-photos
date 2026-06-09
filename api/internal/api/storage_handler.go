@@ -42,13 +42,15 @@ func NewStorageHandler(clientMinio *minio.Client, kafkaProducer *kafka.Producer,
 func RegistroMediaToMediaInfo(registros []*registro.RegistroMedia) []*storagev1.MediaInfo {
 	quantidadeRegistro := len(registros)
 	mediaInfo := make([]*storagev1.MediaInfo, quantidadeRegistro)
+
 	for index, registro := range registros {
+		metadata, _ := json.Marshal(registro.Metadata)
 		mediaInfo[index] = &storagev1.MediaInfo{
 			Filename:  registro.Filename,
 			MediaType: registro.MediaType,
 			CreatedAt: registro.CreatedAt.String(),
-			Metadata:  "",
-			Url:       registro.FilePath,
+			Metadata:  string(metadata),
+			Url:       *registro.FilePath,
 		}
 	}
 

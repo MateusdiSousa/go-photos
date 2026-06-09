@@ -10,7 +10,19 @@ import (
 )
 
 const (
-	SaveRegistroMediaQ = `INSERT INTO consulta.registro_media (file_id, user_id, filename, media_type, mime_type, file_size, bucket, metadata) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
+	SaveRegistroMediaQ = `INSERT INTO consulta.registro_media
+                              (file_id, user_id, filename, media_type, mime_type, file_size, bucket, metadata, hash_sha256)
+                              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                              ON CONFLICT (file_id)
+                              DO UPDATE SET
+                              filename = $3,
+                              media_type = $4,
+                              mime_type = $5,
+                              file_size = $6,
+                              bucket = $7,
+                              metadata = $8,
+                              hash_sha256 = $9;
+`
 )
 
 type ConsultaRepository struct {
@@ -44,7 +56,8 @@ func (r *ConsultaRepository) SaveRegistroMedia(ctx context.Context, registroMedi
 		registroMedia.Mimetype,
 		registroMedia.Size,
 		registroMedia.Bucket,
-		"",
+		registroMedia.Metadata,
+		registroMedia.HashSha256,
 	)
 	if err != nil {
 		return fmt.Errorf("Falha ao executar query 'save_registro_media': %s", err)
