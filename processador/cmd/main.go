@@ -62,6 +62,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("Falha ao iniciar processador de registro: %s", err)
 		}
+
 		err = registro_worker.InitRegistroWorker(ctx, client, p)
 		if err != nil {
 			log.Fatalf("Falha ao iniciar processador de registro: %s", err)

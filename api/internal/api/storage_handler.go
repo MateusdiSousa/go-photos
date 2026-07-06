@@ -28,6 +28,7 @@ type StorageHandler struct {
 var (
 	REGISTRO_CMD = "registro.comando"
 	CMD_UPLOAD   = "registro-upload"
+	CMD_DELETE   = "registro-delete"
 	EXPIRY_TIME  = time.Hour * 2
 	BUCKET_TEMP  = "temp-media"
 )
@@ -136,4 +137,26 @@ func (server *StorageHandler) Upload(stream storagev1.StorageService_UploadServe
 	return stream.SendAndClose(&storagev1.UploadResponse{
 		CmdId: novoCmd.CmdId,
 		Size:  int64(size)})
+}
+
+func (server *StorageHandler) DeleteMedia(ctx context.Context, request *storagev1.DeleteMediaRequest) (*storagev1.DeleteMediaResponse, error) {
+	novoCmd := registro.NewComando(registro.RegistroMedia{
+		FileId: request.FileId,
+		UserId: request.UserId,
+	}, request.UserId, CMD_DELETE)
+
+	comando, err := json.Marshal(*novoCmd)
+	if err != nil {
+		log.Printf("Falha ao gerar mensagem de comando: %s", err)
+		return nil, status.Error(codes.Internal, "Falha ao deletar media")
+	}
+
+	server.kafkaProducer.Produce(&kafka.Message{
+		TopicPartition: kafka.TopicPartition{Topic: &REGISTRO_CMD, Partition: kafka.PartitionAny},
+		Key:            []byte(novoCmd.Cadastro.FileId),
+		Value:          comando}, nil)
+
+	return &storagev1.DeleteMediaResponse{
+		CmdId: novoCmd.CmdId,
+	}, nil
 }
