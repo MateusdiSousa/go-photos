@@ -137,66 +137,9 @@ func (c *Consumer) processMessageWithRetry(ctx context.Context, msg *sarama.Cons
 	case REGISTRO_MEDIA:
 		switch evento.EventType {
 		case EVENTO_REGISTRO_UPLOAD:
-			var registroMedia registro.Evento[registro.RegistroMedia]
-			err := json.Unmarshal(msg.Value, &registroMedia)
-			if err != nil {
-				log.Printf("Falha ao deserializar evento registro-upload: %s", err)
-				return fmt.Errorf("Falha ao deserializar evento")
-			}
-
-			err = c.repository.SaveRegistroMedia(ctx, registroMedia.Dados)
-			if err != nil {
-				log.Printf("Falha ao salvar arquivo no banco de dados: %s", err)
-				return fmt.Errorf("Falha ao salvar Midia no banco de dados")
-			}
-
+			c.handleRegistroUpload(ctx, msg)
 		case EVENTO_REGISTRO_DELETE:
-			var registroUser registro.Evento[registro.RegistroUser]
-			err := json.Unmarshal(msg.Value, &registroUser)
-			if err != nil {
-				return fmt.Errorf("Falha ao deserializar evento registro-delete: %s", err)
-			}
-
-			// Iniciar transação
-			tx, err := c.repository.BeginTx(ctx)
-			if err != nil {
-				return fmt.Errorf("Falha ao iniciar transação: %s", err)
-			}
-			defer tx.Rollback(ctx)
-
-			// Criar repositório com transação
-			txRepo := repository.NewConsultaRepositoryTx(tx)
-
-			// Operações dentro da transação
-			err = txRepo.DeleteRegistroMedia(ctx, registroUser.Dados.FileId, registroUser.Dados.UserId)
-			if err != nil {
-				return fmt.Errorf("Falha ao deletar registro: %s", err)
-			}
-
-			count, err := txRepo.CountRegistroByHash(ctx, registroUser.Dados.HashSha256)
-			if err != nil {
-				return fmt.Errorf("Falha ao contar registros por hash: %s", err)
-			}
-
-			// Se for o último registro, deletar do storage
-			if count == 0 {
-				if err = storage.DeletePhotoAndThumbnailByID(ctx, registroUser.Dados.HashSha256); err != nil {
-					// Verificar se é erro de "não encontrado" (aceitável)
-					if !strings.Contains(err.Error(), "não encontrado") {
-						return fmt.Errorf("Falha ao deletar thumbnail e imagem do armazenamento: %s", err)
-					}
-					log.Printf("Arquivo não encontrado no storage, ignorando: %v", err)
-				}
-				log.Printf("Arquivo deletado do S3 com sucesso: %s", registroUser.Dados.HashSha256)
-			}
-
-			// Commit da transação
-			if err := tx.Commit(ctx); err != nil {
-				return fmt.Errorf("Falha ao commitar transação: %s", err)
-			}
-
-			log.Printf("Registro deletado com sucesso: %s", registroUser.Dados.FileId)
-			return nil
+			c.handleDeleteRegistro(ctx, msg)
 		}
 
 		return nil
@@ -238,4 +181,69 @@ func (c *Consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim saram
 			return nil
 		}
 	}
+}
+
+func (c *Consumer) handleRegistroUpload(ctx context.Context, msg *sarama.ConsumerMessage) error {
+	var registroMedia registro.Evento[registro.RegistroMedia]
+	err := json.Unmarshal(msg.Value, &registroMedia)
+	if err != nil {
+		log.Printf("Falha ao deserializar evento registro-upload: %s", err)
+		return fmt.Errorf("Falha ao deserializar evento")
+	}
+
+	err = c.repository.SaveRegistroMedia(ctx, registroMedia.Dados)
+	if err != nil {
+		log.Printf("Falha ao salvar arquivo no banco de dados: %s", err)
+		return fmt.Errorf("Falha ao salvar Midia no banco de dados")
+	}
+	return nil
+}
+
+func (c *Consumer) handleDeleteRegistro(ctx context.Context, msg *sarama.ConsumerMessage) error {
+	var registroUser registro.Evento[registro.RegistroUser]
+	err := json.Unmarshal(msg.Value, &registroUser)
+	if err != nil {
+		return fmt.Errorf("Falha ao deserializar evento registro-delete: %s", err)
+	}
+
+	// Iniciar transação
+	tx, err := c.repository.BeginTx(ctx)
+	if err != nil {
+		return fmt.Errorf("Falha ao iniciar transação: %s", err)
+	}
+	defer tx.Rollback(ctx)
+
+	// Criar repositório com transação
+	txRepo := repository.NewConsultaRepositoryTx(tx)
+
+	// Operações dentro da transação
+	err = txRepo.DeleteRegistroMedia(ctx, registroUser.Dados.FileId, registroUser.Dados.UserId)
+	if err != nil {
+		return fmt.Errorf("Falha ao deletar registro: %s", err)
+	}
+
+	count, err := txRepo.CountRegistroByHash(ctx, registroUser.Dados.HashSha256)
+	if err != nil {
+		return fmt.Errorf("Falha ao contar registros por hash: %s", err)
+	}
+
+	// Se for o último registro, deletar do storage
+	if count == 0 {
+		if err = storage.DeletePhotoAndThumbnailByID(ctx, registroUser.Dados.HashSha256); err != nil {
+			// Verificar se é erro de "não encontrado" (aceitável)
+			if !strings.Contains(err.Error(), "não encontrado") {
+				return fmt.Errorf("Falha ao deletar thumbnail e imagem do armazenamento: %s", err)
+			}
+			log.Printf("Arquivo não encontrado no storage, ignorando: %v", err)
+		}
+		log.Printf("Arquivo deletado do S3 com sucesso: %s", registroUser.Dados.HashSha256)
+	}
+
+	// Commit da transação
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("Falha ao commitar transação: %s", err)
+	}
+
+	log.Printf("Registro deletado com sucesso: %s", registroUser.Dados.FileId)
+	return nil
 }

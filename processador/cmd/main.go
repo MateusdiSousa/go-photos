@@ -47,14 +47,15 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	postgresConn, err := database.GetInstace()
+	if err != nil {
+		log.Fatalf("Falha ao iniciar conexão com banco de dados: %s", err)
+	}
+	defer postgresConn.Close(ctx)
+
 	switch *workerName {
 	case "archiver":
 		log.Println("Iniciando processador de archiver...")
-		postgresConn, err := database.GetInstace()
-		if err != nil {
-			log.Fatalf("Falha ao iniciar conexão com banco de dados: %s", err)
-		}
-		defer postgresConn.Close(ctx)
 		err = archiver_worker.InitArchiverWorker(ctx, client, postgresConn)
 		if err != nil {
 			log.Fatalf("Falha ao iniciar processador archiver: %s", err)
@@ -62,11 +63,6 @@ func main() {
 
 	case "consulta":
 		log.Println("Iniciando processador de consulta...")
-		postgresConn, err := database.GetInstace()
-		if err != nil {
-			log.Fatalf("Falha ao iniciar conexão com banco de dados: %s", err)
-		}
-		defer postgresConn.Close(ctx)
 		err = consulta_worker.InitConsultaWorker(ctx, client, postgresConn)
 		if err != nil {
 			log.Fatalf("Falha ao iniciar processador de consulta: %s", err)
@@ -79,10 +75,10 @@ func main() {
 			"group.id":          groupId,
 		})
 		if err != nil {
-			log.Fatalf("Falha ao iniciar processador de registro: %s", err)
+			log.Fatalf("Falha ao criar producer para processador de registro: %s", err)
 		}
 
-		err = registro_worker.InitRegistroWorker(ctx, client, p)
+		err = registro_worker.InitRegistroWorker(ctx, client, p, postgresConn)
 		if err != nil {
 			log.Fatalf("Falha ao iniciar processador de registro: %s", err)
 		}
