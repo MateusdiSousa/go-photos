@@ -153,11 +153,13 @@ func (c *RegistroConsumer) handleRegistroComando(ctx context.Context, msg *saram
 
 	case "executado":
 		// Processar comando executado
-		eventType := fmt.Sprintf("%s-executado", comando.TipoCmd)
-		if err := dispatcher.Executa(ctx, eventType, msg, c.Producer); err != nil {
-			log.Printf("Erro ao executar dispatcher para comando executado: %v", err)
-			return fmt.Errorf("falha ao executar dispatcher: %w", err)
+		if comando.TipoCmd == "registro-upload" {
+			if err := dispatcher.Executa(ctx, fmt.Sprintf("%s-executado", comando.TipoCmd), msg, c.Producer); err != nil {
+				log.Printf("Erro ao executar dispatcher para comando executado: %v", err)
+				return fmt.Errorf("falha ao executar dispatcher: %w", err)
+			}
 		}
+
 		log.Printf("Comando executado com sucesso: %s", comando.TipoCmd)
 		return nil
 
