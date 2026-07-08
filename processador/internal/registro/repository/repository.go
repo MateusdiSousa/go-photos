@@ -10,7 +10,7 @@ import (
 
 type IRegistroRepository interface {
 	SaveRegistroMedia(context.Context, registro.RegistroMedia) error
-	FindRegistroByFileIdAndUserId(ctx context.Context, FileId string, UserId string) (*registro.RegistroMedia, error)
+	FindRegistroByFileIdAndUserId(ctx context.Context, FileId string, UserId string) (*registro.RegistroUser, error)
 	DeleteRegistroByFileIdAndUserId(ctx context.Context, FileId string, UserId string) error
 }
 
@@ -19,7 +19,7 @@ const (
                               VALUES ($1, $2, $3)
                               ON CONFLICT (file_id) DO UPDATE SET hash_sha256 = $3;`
 	FindRegistroByFileIdAndUserIdQ   = `SELECT * FROM registro.registro_media WHERE file_id = $1 AND user_id = $2;`
-	DeleteRegistroByFileIdAndUserIdQ = `DELETE FROM registro.registro_media WHERE file_id = $1 AND user_id = $2;`
+	DeleteRegistroByFileIdAndUserIdQ = `DELETE FROM  registro.registro_media WHERE file_id = $1 AND user_id = $2;`
 )
 
 type RegistroRepository struct {
@@ -37,7 +37,7 @@ func NewRegistroRepository(conn *pgx.Conn) (*RegistroRepository, error) {
 		return nil, fmt.Errorf("Falha ao preparar a query 'find_registro_by_file-id_and_user-id': %s'", err)
 	}
 
-	_, err = conn.Prepare(context.Background(), "delete_registro_by_file-id_and_user-id", FindRegistroByFileIdAndUserIdQ)
+	_, err = conn.Prepare(context.Background(), "delete_registro_by_file-id_and_user-id", DeleteRegistroByFileIdAndUserIdQ)
 	if err != nil {
 		return nil, fmt.Errorf("Falha ao preparar a query 'delete_registro_by_file-id_and_user-id': %s'", err)
 	}
@@ -57,19 +57,19 @@ func (r *RegistroRepository) SaveRegistroMedia(ctx context.Context, data registr
 	return nil
 }
 
-func (r *RegistroRepository) FindRegistroByFileIdAndUserId(ctx context.Context, fileId string, userId string) (*registro.RegistroMedia, error) {
+func (r *RegistroRepository) FindRegistroByFileIdAndUserId(ctx context.Context, fileId string, userId string) (*registro.RegistroUser, error) {
 	rows, err := r.Conn.Query(ctx, "find_registro_by_file-id_and_user-id", fileId, userId)
 	if err != nil {
 		return nil, fmt.Errorf("Falha ao procurar registro: %s", err)
 	}
 	defer rows.Close()
 
-	registro, err := pgx.CollectOneRow(rows, pgx.RowToAddrOfStructByName[*registro.RegistroMedia])
+	registro, err := pgx.CollectOneRow(rows, pgx.RowToAddrOfStructByName[registro.RegistroUser])
 	if err != nil {
 		return nil, fmt.Errorf("Falha ao converter row para objeto: %s", err)
 	}
 
-	return *registro, nil
+	return registro, nil
 }
 
 func (r *RegistroRepository) DeleteRegistroByFileIdAndUserId(ctx context.Context, fileId string, userId string) error {

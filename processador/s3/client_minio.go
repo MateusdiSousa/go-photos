@@ -178,3 +178,123 @@ func ThumbnailExiste(ctx context.Context, hash string) (bool, error) {
 
 	return exists, nil
 }
+
+// DeletePhotoByID deleta uma foto do bucket photos pelo ID
+func DeletePhotoByID(ctx context.Context, fileID string) error {
+	client, err := getClientBucketPhotos()
+	if err != nil {
+		return fmt.Errorf("Falha ao criar cliente S3 para photos: %s", err)
+	}
+
+	// Verifica se o objeto existe antes de deletar
+	exists, err := objectExiste(ctx, client, BUCKET_PHOTOS, fileID)
+	if err != nil {
+		return fmt.Errorf("Falha ao verificar existência da foto: %s", err)
+	}
+
+	if !exists {
+		return fmt.Errorf("Foto com ID %s não encontrada no bucket photos", fileID)
+	}
+
+	// Remove o objeto do bucket
+	err = client.RemoveObject(ctx, BUCKET_PHOTOS, fileID, minio.RemoveObjectOptions{})
+	if err != nil {
+		return fmt.Errorf("Falha ao deletar foto do bucket photos: %s", err)
+	}
+
+	log.Printf("Foto com ID %s deletada com sucesso do bucket photos", fileID)
+	return nil
+}
+
+// DeleteThumbnailByID deleta uma thumbnail do bucket thumbnails pelo ID
+func DeleteThumbnailByID(ctx context.Context, fileID string) error {
+	client, err := getClientBucketThumbnail()
+	if err != nil {
+		return fmt.Errorf("Falha ao criar cliente S3 para thumbnails: %s", err)
+	}
+
+	// Verifica se o objeto existe antes de deletar
+	exists, err := objectExiste(ctx, client, BUCKET_THUMBNAILS, fileID)
+	if err != nil {
+		return fmt.Errorf("Falha ao verificar existência da thumbnail: %s", err)
+	}
+
+	if !exists {
+		return fmt.Errorf("Thumbnail com ID %s não encontrada no bucket thumbnails", fileID)
+	}
+
+	// Remove o objeto do bucket
+	err = client.RemoveObject(ctx, BUCKET_THUMBNAILS, fileID, minio.RemoveObjectOptions{})
+	if err != nil {
+		return fmt.Errorf("Falha ao deletar thumbnail do bucket thumbnails: %s", err)
+	}
+
+	log.Printf("Thumbnail com ID %s deletada com sucesso do bucket thumbnails", fileID)
+	return nil
+}
+
+// DeletePhotoAndThumbnailByID deleta tanto a foto quanto a thumbnail pelo ID
+func DeletePhotoAndThumbnailByID(ctx context.Context, fileID string) error {
+	var errs []error
+
+	// Tenta deletar a foto
+	if err := DeletePhotoByID(ctx, fileID); err != nil {
+		errs = append(errs, fmt.Errorf("erro ao deletar foto: %w", err))
+	}
+
+	// Tenta deletar a thumbnail
+	if err := DeleteThumbnailByID(ctx, fileID); err != nil {
+		errs = append(errs, fmt.Errorf("erro ao deletar thumbnail: %w", err))
+	}
+
+	if len(errs) > 0 {
+		return fmt.Errorf("erros ao deletar arquivos: %v", errs)
+	}
+
+	log.Printf("Foto e thumbnail com ID %s deletadas com sucesso", fileID)
+	return nil
+}
+
+// DeleteMultiplePhotos deleta múltiplas fotos do bucket photos
+func DeleteMultiplePhotos(ctx context.Context, fileIDs []string) error {
+	client, err := getClientBucketPhotos()
+	if err != nil {
+		return fmt.Errorf("Falha ao criar cliente S3 para photos: %s", err)
+	}
+
+	var errors []error
+	for _, fileID := range fileIDs {
+		if err := client.RemoveObject(ctx, BUCKET_PHOTOS, fileID, minio.RemoveObjectOptions{}); err != nil {
+			errors = append(errors, fmt.Errorf("falha ao deletar %s: %w", fileID, err))
+		}
+	}
+
+	if len(errors) > 0 {
+		return fmt.Errorf("erros ao deletar múltiplas fotos: %v", errors)
+	}
+
+	log.Printf("%d fotos deletadas com sucesso do bucket photos", len(fileIDs))
+	return nil
+}
+
+// DeleteMultipleThumbnails deleta múltiplas thumbnails do bucket thumbnails
+func DeleteMultipleThumbnails(ctx context.Context, fileIDs []string) error {
+	client, err := getClientBucketThumbnail()
+	if err != nil {
+		return fmt.Errorf("Falha ao criar cliente S3 para thumbnails: %s", err)
+	}
+
+	var errors []error
+	for _, fileID := range fileIDs {
+		if err := client.RemoveObject(ctx, BUCKET_THUMBNAILS, fileID, minio.RemoveObjectOptions{}); err != nil {
+			errors = append(errors, fmt.Errorf("falha ao deletar %s: %w", fileID, err))
+		}
+	}
+
+	if len(errors) > 0 {
+		return fmt.Errorf("erros ao deletar múltiplas thumbnails: %v", errors)
+	}
+
+	log.Printf("%d thumbnails deletadas com sucesso do bucket thumbnails", len(fileIDs))
+	return nil
+}

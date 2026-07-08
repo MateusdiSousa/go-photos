@@ -153,16 +153,16 @@ func (service *RegistroService) registroUpload(ctx context.Context, msg *sarama.
 	}, nil
 }
 
-func (service *RegistroService) deleteRegistro(ctx context.Context, msg *sarama.ConsumerMessage, cmd *registro_api.Comando[registro_api.RegistroMedia]) ([]dispatcher.MensagemKafka, []dispatcher.MensagemKafka) {
+func (service *RegistroService) deleteRegistro(ctx context.Context, msg *sarama.ConsumerMessage, cmd *registro_api.Comando[map[string]string]) ([]dispatcher.MensagemKafka, []dispatcher.MensagemKafka) {
 	topico := msg.Topic
 	chave := string(msg.Key)
 
-	media, err := service.repository.FindRegistroByFileIdAndUserId(ctx, cmd.Cadastro.FileId, cmd.Cadastro.UserId)
+	media, err := service.repository.FindRegistroByFileIdAndUserId(ctx, cmd.Cadastro["file-id"], cmd.Cadastro["user-id"])
 	if err != nil {
 		return nil, []dispatcher.MensagemKafka{dispatcher.NewMensagemKafkaRejeitada(cmd, topico, chave, err)}
 	}
 
-	err = service.repository.DeleteRegistroByFileIdAndUserId(ctx, cmd.Cadastro.FileId, cmd.Cadastro.UserId)
+	err = service.repository.DeleteRegistroByFileIdAndUserId(ctx, cmd.Cadastro["file-id"], cmd.Cadastro["user-id"])
 	if err != nil {
 		return nil, []dispatcher.MensagemKafka{dispatcher.NewMensagemKafkaRejeitada(cmd, topico, chave, err)}
 	}

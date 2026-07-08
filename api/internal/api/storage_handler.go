@@ -140,10 +140,11 @@ func (server *StorageHandler) Upload(stream storagev1.StorageService_UploadServe
 }
 
 func (server *StorageHandler) DeleteMedia(ctx context.Context, request *storagev1.DeleteMediaRequest) (*storagev1.DeleteMediaResponse, error) {
-	novoCmd := registro.NewComando(registro.RegistroMedia{
-		FileId: request.FileId,
-		UserId: request.UserId,
-	}, request.UserId, CMD_DELETE)
+	data := map[string]string{
+		"file-id": request.FileId,
+		"user-id": request.UserId,
+	}
+	novoCmd := registro.NewComando(data, request.UserId, CMD_DELETE)
 
 	comando, err := json.Marshal(*novoCmd)
 	if err != nil {
@@ -153,7 +154,7 @@ func (server *StorageHandler) DeleteMedia(ctx context.Context, request *storagev
 
 	server.kafkaProducer.Produce(&kafka.Message{
 		TopicPartition: kafka.TopicPartition{Topic: &REGISTRO_CMD, Partition: kafka.PartitionAny},
-		Key:            []byte(novoCmd.Cadastro.FileId),
+		Key:            []byte(request.FileId),
 		Value:          comando}, nil)
 
 	return &storagev1.DeleteMediaResponse{

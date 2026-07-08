@@ -10,6 +10,7 @@ import (
 
 	"github.com/IBM/sarama"
 	consulta_worker "github.com/MateusdiSousa/go-photos/processador/internal/consulta/worker"
+	"github.com/MateusdiSousa/go-photos/processador/internal/database"
 	registro_worker "github.com/MateusdiSousa/go-photos/processador/internal/registro/worker"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
@@ -48,7 +49,12 @@ func main() {
 	switch *workerName {
 	case "consulta":
 		log.Println("Iniciando processador de consulta...")
-		err = consulta_worker.InitConsultaWorker(ctx, client)
+		postgresConn, err := database.GetInstace()
+		if err != nil {
+			log.Fatalf("Falha ao iniciar conexão com banco de dados: %s", err)
+		}
+		defer postgresConn.Close(ctx)
+		err = consulta_worker.InitConsultaWorker(ctx, client, postgresConn)
 		if err != nil {
 			log.Fatalf("Falha ao iniciar processador de consulta: %s", err)
 		}
@@ -78,5 +84,4 @@ func main() {
 	signal.Notify(sigterm, syscall.SIGINT, syscall.SIGTERM)
 	<-sigterm
 	log.Println("Encerrando o processador de forma segura...")
-
 }

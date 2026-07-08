@@ -41,6 +41,12 @@ type RegistroMedia struct {
 	FilePath      *string   `db:"file_path" json:"file-path"`
 }
 
+type RegistroUser struct {
+	FileId     string `db:"file_id" json:"file-id"`
+	UserId     string `db:"user_id" json:"user-id"`
+	HashSha256 string `db:"hash_sha256" json:"hash-sha256"`
+}
+
 type Evento[T any] struct {
 	EventId   string    `json:"event-id"`
 	EventType string    `json:"event-type"`
@@ -65,6 +71,7 @@ func NewEvent[T any](dados T, userId string, tipoEvento string) *Evento[T] {
 		EventId:   uuid.NewString(),
 		EventType: tipoEvento,
 		CreatedAt: time.Now(),
+		UserId:    userId,
 	}
 }
 
