@@ -8,8 +8,10 @@ import (
 
 	"github.com/IBM/sarama"
 	"github.com/MateusdiSousa/go-photos/api/domain/registro"
+	dispatcher "github.com/MateusdiSousa/go-photos/processador/dispatcher"
+	"github.com/MateusdiSousa/go-photos/processador/internal/database"
 	registro_model "github.com/MateusdiSousa/go-photos/processador/internal/registro/model"
-	"github.com/MateusdiSousa/go-photos/processador/model"
+	"github.com/MateusdiSousa/go-photos/processador/internal/registro/repository"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
@@ -21,7 +23,17 @@ type Consumer struct {
 }
 
 func InitRegistroWorker(ctx context.Context, client sarama.ConsumerGroup, p *kafka.Producer) error {
-	registro_model.SetupRegistroModel()
+	conn, err := database.GetInstace()
+	if err != nil {
+		return err
+	}
+
+	repositorio, err := repository.NewRegistroRepository(conn)
+	if err != nil {
+		return err
+	}
+
+	registro_model.SetupRegistroModel(repositorio)
 	consumer := NewConsumer(make(chan bool), p)
 
 	go func() {
@@ -64,10 +76,13 @@ func (c *Consumer) ProcessMessage(msg *sarama.ConsumerMessage) error {
 		case "rejeitado":
 			log.Println("Não implementado ainda.")
 		case "executado":
-			log.Println("Não implementado ainda.")
+			if err := dispatcher.Executa(context.Background(), fmt.Sprintf("%s-executado", comando.TipoCmd), msg, c.Producer); err != nil {
+				log.Println(err.Error())
+				return sarama.ErrInvalidMessage
+			}
 			// Caso seja executado, gerar evento de registro.media e atualizar o banco de dados de registro
 		case "pendente":
-			if err := model.Executa(context.Background(), comando.TipoCmd, msg, c.Producer); err != nil {
+			if err := dispatcher.Executa(context.Background(), comando.TipoCmd, msg, c.Producer); err != nil {
 				log.Println(err.Error())
 				return sarama.ErrInvalidMessage
 			}

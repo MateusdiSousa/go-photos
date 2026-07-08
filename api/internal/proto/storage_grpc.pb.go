@@ -19,8 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	StorageService_Upload_FullMethodName   = "/storage.v1.StorageService/Upload"
-	StorageService_GetMedia_FullMethodName = "/storage.v1.StorageService/GetMedia"
+	StorageService_Upload_FullMethodName      = "/storage.v1.StorageService/Upload"
+	StorageService_GetMedia_FullMethodName    = "/storage.v1.StorageService/GetMedia"
+	StorageService_DeleteMedia_FullMethodName = "/storage.v1.StorageService/DeleteMedia"
 )
 
 // StorageServiceClient is the client API for StorageService service.
@@ -29,6 +30,7 @@ const (
 type StorageServiceClient interface {
 	Upload(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[UploadRequest, UploadResponse], error)
 	GetMedia(ctx context.Context, in *GetMediaRequest, opts ...grpc.CallOption) (*GetMediaResponse, error)
+	DeleteMedia(ctx context.Context, in *DeleteMediaRequest, opts ...grpc.CallOption) (*DeleteMediaResponse, error)
 }
 
 type storageServiceClient struct {
@@ -62,12 +64,23 @@ func (c *storageServiceClient) GetMedia(ctx context.Context, in *GetMediaRequest
 	return out, nil
 }
 
+func (c *storageServiceClient) DeleteMedia(ctx context.Context, in *DeleteMediaRequest, opts ...grpc.CallOption) (*DeleteMediaResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteMediaResponse)
+	err := c.cc.Invoke(ctx, StorageService_DeleteMedia_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // StorageServiceServer is the server API for StorageService service.
 // All implementations must embed UnimplementedStorageServiceServer
 // for forward compatibility.
 type StorageServiceServer interface {
 	Upload(grpc.ClientStreamingServer[UploadRequest, UploadResponse]) error
 	GetMedia(context.Context, *GetMediaRequest) (*GetMediaResponse, error)
+	DeleteMedia(context.Context, *DeleteMediaRequest) (*DeleteMediaResponse, error)
 	mustEmbedUnimplementedStorageServiceServer()
 }
 
@@ -83,6 +96,9 @@ func (UnimplementedStorageServiceServer) Upload(grpc.ClientStreamingServer[Uploa
 }
 func (UnimplementedStorageServiceServer) GetMedia(context.Context, *GetMediaRequest) (*GetMediaResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetMedia not implemented")
+}
+func (UnimplementedStorageServiceServer) DeleteMedia(context.Context, *DeleteMediaRequest) (*DeleteMediaResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteMedia not implemented")
 }
 func (UnimplementedStorageServiceServer) mustEmbedUnimplementedStorageServiceServer() {}
 func (UnimplementedStorageServiceServer) testEmbeddedByValue()                        {}
@@ -130,6 +146,24 @@ func _StorageService_GetMedia_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _StorageService_DeleteMedia_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteMediaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StorageServiceServer).DeleteMedia(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: StorageService_DeleteMedia_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StorageServiceServer).DeleteMedia(ctx, req.(*DeleteMediaRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // StorageService_ServiceDesc is the grpc.ServiceDesc for StorageService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -140,6 +174,10 @@ var StorageService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetMedia",
 			Handler:    _StorageService_GetMedia_Handler,
+		},
+		{
+			MethodName: "DeleteMedia",
+			Handler:    _StorageService_DeleteMedia_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
