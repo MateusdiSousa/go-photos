@@ -9,9 +9,9 @@ import (
 	"syscall"
 
 	"github.com/IBM/sarama"
-	consulta_worker "github.com/MateusdiSousa/go-photos/processador/internal/consulta/worker"
 	"github.com/MateusdiSousa/go-photos/processador/internal/database"
-	registro_worker "github.com/MateusdiSousa/go-photos/processador/internal/registro/worker"
+	consulta_worker "github.com/MateusdiSousa/go-photos/processador/internal/workers/consulta/worker"
+	registro_worker "github.com/MateusdiSousa/go-photos/processador/internal/workers/registro/worker"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
