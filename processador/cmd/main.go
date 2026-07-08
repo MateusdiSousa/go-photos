@@ -10,6 +10,7 @@ import (
 
 	"github.com/IBM/sarama"
 	"github.com/MateusdiSousa/go-photos/processador/internal/database"
+	archiver_worker "github.com/MateusdiSousa/go-photos/processador/internal/workers/archiver/worker"
 	consulta_worker "github.com/MateusdiSousa/go-photos/processador/internal/workers/consulta/worker"
 	registro_worker "github.com/MateusdiSousa/go-photos/processador/internal/workers/registro/worker"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
@@ -47,6 +48,18 @@ func main() {
 	defer cancel()
 
 	switch *workerName {
+	case "archiver":
+		log.Println("Iniciando processador de archiver...")
+		postgresConn, err := database.GetInstace()
+		if err != nil {
+			log.Fatalf("Falha ao iniciar conexão com banco de dados: %s", err)
+		}
+		defer postgresConn.Close(ctx)
+		err = archiver_worker.InitArchiverWorker(ctx, client, postgresConn)
+		if err != nil {
+			log.Fatalf("Falha ao iniciar processador archiver: %s", err)
+		}
+
 	case "consulta":
 		log.Println("Iniciando processador de consulta...")
 		postgresConn, err := database.GetInstace()

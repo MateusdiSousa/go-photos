@@ -137,7 +137,7 @@ func (service *RegistroService) registroUpload(ctx context.Context, msg *sarama.
 		"longitude":     metadados.Longitude,
 	}
 
-	evento, _ := json.Marshal(registro_api.NewEvent(cmd.Cadastro, cmd.UserId, cmd.TipoCmd))
+	evento, _ := json.Marshal(registro_api.NewEvent(cmd.Cadastro, cmd.UserId, cmd.Cadastro.FileId, cmd.TipoCmd))
 	cmdExecutado, _ := json.Marshal(cmd)
 	return []dispatcher.MensagemKafka{
 		{
@@ -169,7 +169,7 @@ func (service *RegistroService) deleteRegistro(ctx context.Context, msg *sarama.
 
 	cmd.Status = "executado"
 
-	evento, _ := json.Marshal(registro.NewEvent(media, cmd.UserId, cmd.TipoCmd))
+	evento, _ := json.Marshal(registro.NewEvent(media, cmd.UserId, cmd.Cadastro["file-id"], cmd.TipoCmd))
 	cmdExecutado, _ := json.Marshal(cmd)
 	return []dispatcher.MensagemKafka{
 		{

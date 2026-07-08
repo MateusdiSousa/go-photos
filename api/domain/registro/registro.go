@@ -48,11 +48,13 @@ type RegistroUser struct {
 }
 
 type Evento[T any] struct {
-	EventId   string    `json:"event-id"`
-	EventType string    `json:"event-type"`
-	UserId    string    `json:"user-id"`
-	Dados     T         `json:"dados"`
-	CreatedAt time.Time `json:"created-at"`
+	EventId     string    `json:"event-id"`
+	AggregateId string    `json:"aggregate-id"`
+	EventType   string    `json:"event-type"`
+	Version     int32     `json:"version"`
+	UserId      string    `json:"user-id"`
+	Dados       T         `json:"dados"`
+	CreatedAt   time.Time `json:"created-at"`
 }
 
 type Comando[T any] struct {
@@ -65,13 +67,15 @@ type Comando[T any] struct {
 	Erros     []string  `json:"erros"`
 }
 
-func NewEvent[T any](dados T, userId string, tipoEvento string) *Evento[T] {
+func NewEvent[T any](dados T, userId string, aggregateId, tipoEvento string) *Evento[T] {
 	return &Evento[T]{
-		Dados:     dados,
-		EventId:   uuid.NewString(),
-		EventType: tipoEvento,
-		CreatedAt: time.Now(),
-		UserId:    userId,
+		Dados:       dados,
+		Version:     1,
+		EventId:     uuid.NewString(),
+		AggregateId: aggregateId,
+		EventType:   tipoEvento,
+		CreatedAt:   time.Now(),
+		UserId:      userId,
 	}
 }
 
