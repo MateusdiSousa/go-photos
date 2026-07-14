@@ -11,11 +11,9 @@ import (
 )
 
 var (
-	once         sync.Once
-	clientMinio  *minio.Client = nil
-	ENDPOINT                   = "localhost:3900"
-	ACESS_KEY_ID               = godotenv.Load()
-	SECRET_KEY                 = "9d7d8172e57e2690e5bf52040bf644be59e95c2449d6ef573fed96108de4a030"
+	once        sync.Once
+	clientMinio *minio.Client = nil
+	ENDPOINT                  = "localhost:3900"
 )
 
 func GetClientMinio() (*minio.Client, error) {
@@ -33,7 +31,7 @@ func GetClientMinio() (*minio.Client, error) {
 
 		clientMinio, err = minio.New(ENDPOINT, &minio.Options{
 			Secure: false,
-			Creds:  credentials.NewStaticV4(os.Getenv("ID_KEY_TEMP_KEY"), os.Getenv("SECRET_KEY_TEMP_KEY"), ""),
+			Creds:  credentials.NewStaticV4(os.Getenv("ID_KEY_CONSULTA_KEY"), os.Getenv("SECRET_KEY_CONSULTA_KEY"), ""),
 		})
 		if err != nil {
 			log.Printf("Falha ao conectar com o servidor S3: %s", err)

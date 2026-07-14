@@ -1,0 +1,3 @@
+create-bucket thumbnails
+create-key thumbnails-key
+allow-bucket thumbnails --read --write --key thumbnails-key

@@ -15,7 +15,8 @@ import (
 )
 
 const (
-	expirationTime = time.Hour * 1
+	expirationTime   = time.Hour * 1
+	THUMBNAIL_BUCKET = "thumbnails"
 )
 
 type MediaService struct {
@@ -54,15 +55,19 @@ func (service *MediaService) GetMediaPaged(ctx context.Context, userId string, p
 
 	for _, media := range medias {
 		reqParams.Set("response-content-type", media.Mimetype)
-		objectFile, err := service.minioClient.PresignedGetObject(ctx, media.Bucket, media.FileId, expirationTime, reqParams)
+		objectFile, err := service.minioClient.PresignedGetObject(ctx, media.Bucket, media.HashSha256, expirationTime, reqParams)
 		if err != nil {
 			log.Printf("Falha ao gerar URL para arquivo: %s", media.FileId)
 			continue
 		}
+		filepath := objectFile.String()
+		media.FilePath = &filepath
 
-		log.Printf("URL gerada para arquivo: %s", media.FileId)
-		media.FilePath = objectFile.String()
-
+		thumbnailObj, err := service.minioClient.PresignedGetObject(ctx, THUMBNAIL_BUCKET, media.HashSha256, expirationTime, reqParams)
+		if err == nil {
+			thumbnailUrl := thumbnailObj.String()
+			media.ThumbnailPath = &thumbnailUrl
+		}
 	}
 
 	log.Printf("Quantidade de medias encontradas: %v", len(medias))

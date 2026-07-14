@@ -31,13 +31,24 @@ message MediaInfo {
   string created_at = 3;
   string metadata = 4;
   string url = 5;
+  string thumbnail = 6;
 }
 
 message GetMediaResponse {
   repeated MediaInfo media_urls = 1;
 }
 
+message DeleteMediaRequest {
+  string file_id = 1;
+  string user_id = 2;
+}
+
+message DeleteMediaResponse {
+  string cmd_id = 1;
+}
+
 service StorageService {
   rpc Upload(stream UploadRequest) returns (UploadResponse);
   rpc GetMedia(GetMediaRequest) returns (GetMediaResponse);
+  rpc DeleteMedia(DeleteMediaRequest) returns (DeleteMediaResponse);
 }

@@ -1,0 +1,4 @@
+create-key consulta-key
+allow-bucket thumbnails --read --write --key consulta-key
+allow-bucket photos --read --write --key consulta-key
+allow-bucket temp-media --read --write --key consulta-key

@@ -9,8 +9,11 @@ import (
 	"syscall"
 
 	"github.com/IBM/sarama"
-	consulta_worker "github.com/MateusdiSousa/go-photos/processador/internal/consulta/worker"
-	registro_worker "github.com/MateusdiSousa/go-photos/processador/internal/registro/worker"
+	"github.com/MateusdiSousa/go-photos/processador/internal/database"
+	archiver_worker "github.com/MateusdiSousa/go-photos/processador/internal/workers/archiver/worker"
+	consulta_worker "github.com/MateusdiSousa/go-photos/processador/internal/workers/consulta/worker"
+	registro_worker "github.com/MateusdiSousa/go-photos/processador/internal/workers/registro/worker"
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
 func main() {
@@ -44,23 +47,44 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	postgresConn, err := database.GetInstace()
+	if err != nil {
+		log.Fatalf("Falha ao iniciar conexão com banco de dados: %s", err)
+	}
+	defer postgresConn.Close(ctx)
+
 	switch *workerName {
+	case "archiver":
+		log.Println("Iniciando processador de archiver...")
+		err = archiver_worker.InitArchiverWorker(ctx, client, postgresConn)
+		if err != nil {
+			log.Fatalf("Falha ao iniciar processador archiver: %s", err)
+		}
+
 	case "consulta":
 		log.Println("Iniciando processador de consulta...")
-		err = consulta_worker.InitConsultaWorker(ctx, client)
+		err = consulta_worker.InitConsultaWorker(ctx, client, postgresConn)
 		if err != nil {
 			log.Fatalf("Falha ao iniciar processador de consulta: %s", err)
 		}
 
 	case "registro":
 		log.Println("Iniciando processador de registro...")
-		err = registro_worker.InitRegistroWorker(ctx, client)
+		p, err := kafka.NewProducer(&kafka.ConfigMap{
+			"bootstrap.servers": brokers[0],
+			"group.id":          groupId,
+		})
+		if err != nil {
+			log.Fatalf("Falha ao criar producer para processador de registro: %s", err)
+		}
+
+		err = registro_worker.InitRegistroWorker(ctx, client, p, postgresConn)
 		if err != nil {
 			log.Fatalf("Falha ao iniciar processador de registro: %s", err)
 		}
 
 	default:
-		log.Printf("Não existe processador com o nome '%s'.")
+		log.Printf("Não existe processador com o nome '%s'.", *workerName)
 		os.Exit(0)
 	}
 
@@ -69,5 +93,4 @@ func main() {
 	signal.Notify(sigterm, syscall.SIGINT, syscall.SIGTERM)
 	<-sigterm
 	log.Println("Encerrando o processador de forma segura...")
-
 }
