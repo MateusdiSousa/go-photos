@@ -1,0 +1,49 @@
+package interceptor
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"time"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
+)
+
+func ServerInterceptor(
+	ctx context.Context,
+	req interface{},
+	info *grpc.UnaryServerInfo,
+	handler grpc.UnaryHandler) (interface{}, error) {
+	start := time.Now()
+	// Validação de usuário antes da chamada.
+
+	err := validUser(ctx)
+	if err != nil {
+		log.Printf("Usuário não autorizado: %s", err)
+		return nil, grpc.Errorf(codes.PermissionDenied, "Usuário não autorizado.")
+	}
+
+	resp, err := handler(ctx, req)
+
+	log.Printf("Chamada RPC method %s; Duration: %s, Error: %v", info.FullMethod, time.Since(start), err)
+
+	return resp, err
+}
+
+func validUser(ctx context.Context) error {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return fmt.Errorf("Sem metadados na chamada")
+	}
+
+	userID := md["user-id"]
+	if len(userID) == 0 {
+		return fmt.Errorf("Requisição não possui user id")
+	}
+
+	// PROCESSAMENTO DO TOKEN OU DO ID DO USUÁRIO FUTURAMENTE
+
+	return nil
+}

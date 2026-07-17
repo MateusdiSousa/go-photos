@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/MateusdiSousa/go-photos/api/domain/registro"
+	"github.com/MateusdiSousa/go-photos/api/internal/interceptor"
 	storagev1 "github.com/MateusdiSousa/go-photos/api/internal/proto"
 	"github.com/MateusdiSousa/go-photos/api/internal/service"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
@@ -60,7 +61,9 @@ func RegistroMediaToMediaInfo(registros []*registro.RegistroMedia) []*storagev1.
 }
 
 func (server *StorageHandler) GetMedia(ctx context.Context, request *storagev1.GetMediaRequest) (*storagev1.GetMediaResponse, error) {
-	medias, err := server.mediaService.GetMediaPaged(ctx, request.UserId, int(request.PageSize), int(request.PageNum))
+	userID := ctx.Value(interceptor.UserIDKey).(string)
+
+	medias, err := server.mediaService.GetMediaPaged(ctx, userID, int(request.PageSize), int(request.PageNum))
 	if err != nil {
 		log.Printf("Falha ao encontrar fotos do usuário: %s", err)
 		return nil, status.Error(codes.Internal, "Falha ao encontrar fotos do usuário.")
@@ -99,8 +102,10 @@ func (server *StorageHandler) Upload(stream storagev1.StorageService_UploadServe
 		}
 
 		once.Do(func() {
+			userID := stream.Context().Value(interceptor.UserIDKey).(string)
+
 			novoCmd = registro.NewComando(registro.RegistroMedia{
-				UserId:    req.UserId,
+				UserId:    userID,
 				FileId:    uuidFile,
 				Filename:  req.Filename,
 				MediaType: req.MediaType,
@@ -140,9 +145,11 @@ func (server *StorageHandler) Upload(stream storagev1.StorageService_UploadServe
 }
 
 func (server *StorageHandler) DeleteMedia(ctx context.Context, request *storagev1.DeleteMediaRequest) (*storagev1.DeleteMediaResponse, error) {
+	userID := ctx.Value(interceptor.UserIDKey).(string)
+
 	data := map[string]string{
 		"file-id": request.FileId,
-		"user-id": request.UserId,
+		"user-id": userID,
 	}
 	novoCmd := registro.NewComando(data, request.UserId, CMD_DELETE)
 

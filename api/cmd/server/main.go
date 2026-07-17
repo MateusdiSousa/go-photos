@@ -15,6 +15,7 @@ import (
 
 	api "github.com/MateusdiSousa/go-photos/api/internal/api"
 	"github.com/MateusdiSousa/go-photos/api/internal/client"
+	"github.com/MateusdiSousa/go-photos/api/internal/interceptor"
 	storagev1 "github.com/MateusdiSousa/go-photos/api/internal/proto"
 	"github.com/MateusdiSousa/go-photos/api/internal/repository"
 	"github.com/MateusdiSousa/go-photos/api/internal/service"
@@ -60,7 +61,7 @@ func main() {
 	mediaService := service.NewMediaService(mediaRepository, clientMinio)
 
 	// SERVER
-	server := grpc.NewServer()
+	server := grpc.NewServer(grpc.UnaryInterceptor(interceptor.ServerInterceptor))
 	storageServer := api.NewStorageHandler(clientMinio, producer, mediaService)
 
 	storagev1.RegisterStorageServiceServer(server, storageServer)
