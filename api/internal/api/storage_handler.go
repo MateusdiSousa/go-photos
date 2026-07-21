@@ -63,6 +63,8 @@ func RegistroMediaToMediaInfo(registros []*registro.RegistroMedia) []*storagev1.
 func (server *StorageHandler) GetMedia(ctx context.Context, request *storagev1.GetMediaRequest) (*storagev1.GetMediaResponse, error) {
 	userID := ctx.Value(interceptor.UserIDKey).(string)
 
+	log.Printf("USER ID: %s", userID)
+
 	medias, err := server.mediaService.GetMediaPaged(ctx, userID, int(request.PageSize), int(request.PageNum))
 	if err != nil {
 		log.Printf("Falha ao encontrar fotos do usuário: %s", err)
@@ -101,8 +103,13 @@ func (server *StorageHandler) Upload(stream storagev1.StorageService_UploadServe
 			break
 		}
 
+		userID, err := interceptor.ExtractUserID(stream.Context())
+		if err != nil {
+			log.Println("Falha ao extrair user id")
+			break
+		}
+
 		once.Do(func() {
-			userID := stream.Context().Value(interceptor.UserIDKey).(string)
 
 			novoCmd = registro.NewComando(registro.RegistroMedia{
 				UserId:    userID,

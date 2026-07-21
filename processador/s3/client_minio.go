@@ -129,7 +129,9 @@ func AddThumbnail(ctx context.Context, filename string, size int64, r io.Reader)
 		return fmt.Errorf("Falha ao criar cliente S3: %s", err)
 	}
 
-	_, err = client.PutObject(ctx, "thumbnails", filename, r, size, minio.PutObjectOptions{})
+	_, err = client.PutObject(ctx, "thumbnails", filename, r, size, minio.PutObjectOptions{
+		ContentType: "image/webp", // 🔥 Define explicitamente o MIME type para o Garage
+	})
 	if err != nil {
 		return err
 	}
@@ -296,5 +298,18 @@ func DeleteMultipleThumbnails(ctx context.Context, fileIDs []string) error {
 	}
 
 	log.Printf("%d thumbnails deletadas com sucesso do bucket thumbnails", len(fileIDs))
+	return nil
+}
+
+func DownloadFromTempBucket(ctx context.Context, bucketName string, srcFile string, destFile string) error {
+	client, err := getClientTempPhotos()
+	if err != nil {
+		return fmt.Errorf("Falha ao criar cliente S3 para arquivo temporários")
+	}
+
+	err = client.FGetObject(ctx, bucketName, srcFile, destFile, minio.GetObjectOptions{})
+	if err != nil {
+		return fmt.Errorf("Falha ao baixa arquivo para %s do bucket temporario: %w", srcFile, err)
+	}
 	return nil
 }

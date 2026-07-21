@@ -10,6 +10,7 @@ import (
 	"image/png"
 	"io"
 	"log"
+	"os/exec"
 	"slices"
 	"time"
 
@@ -29,7 +30,8 @@ import (
 )
 
 var (
-	tiposValidos_image        = []string{"image/jpg", "image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"}
+	SUPPORTED_TYPE_IMAGE      = []string{"image/jpg", "image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"}
+	SUPPORTED_TYPE_VIDEO      = []string{"video/mp4", "video/quick-time", "video/x-matroska"}
 	SUPPORTED_TYPES_IMAGEMETA = []string{"image/jpg", "image/jpeg", "image/png", "image/heic", "image/heif"}
 )
 
@@ -113,7 +115,7 @@ func ExtrairMetaWebP(r io.ReadSeeker) (*MetadadosMidia, error) {
 }
 
 func ExtrairMetadadosImagem(r io.ReadSeeker, mediaInfo registro.RegistroMedia) (*MetadadosMidia, error) {
-	if !slices.Contains(tiposValidos_image, mediaInfo.Mimetype) {
+	if !slices.Contains(SUPPORTED_TYPE_IMAGE, mediaInfo.Mimetype) {
 		return nil, fmt.Errorf("Media com Mimetype inválido.")
 	}
 
@@ -337,4 +339,26 @@ func DetectImageFormat(r io.Reader) (ImageFormat, error) {
 	}
 
 	return "", fmt.Errorf("could not detect image format")
+}
+
+func GerarThumbnailFromVideo(path string) ([]byte, error) {
+	var ffmpegOutput bytes.Buffer
+
+	comandoFfmpeg := exec.Command("ffmpeg",
+		"-ss", "00:00:01",
+		"-i", path,
+		"-vframes", "1",
+		"-vf", "scale=320:-1",
+		"-f", "image2",
+		"-vcodec", "libwebp",
+		"pipe:1",
+	)
+
+	comandoFfmpeg.Stdout = &ffmpegOutput
+
+	if err := comandoFfmpeg.Run(); err != nil {
+		return nil, fmt.Errorf("Falha ao gerar thumbnail do vídeo: %s", err)
+	}
+
+	return ffmpegOutput.Bytes(), nil
 }

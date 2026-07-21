@@ -13,7 +13,7 @@ import (
 
 type contextKey string
 
-const UserIDKey contextKey = "user_id"
+const UserIDKey contextKey = "user-id"
 
 // wrappedStream serve para podermos sobrescrever o Context() em gRPC Streams
 type wrappedStream struct {
@@ -33,7 +33,7 @@ func ServerInterceptor(
 	start := time.Now()
 	// Validação de usuário antes da chamada.
 
-	userID, err := extractUserID(ctx)
+	userID, err := ExtractUserID(ctx)
 	if err != nil {
 		log.Printf("Usuário não autorizado: %s", err)
 		return nil, grpc.Errorf(codes.PermissionDenied, "Usuário não autorizado.")
@@ -50,11 +50,12 @@ func ServerInterceptor(
 }
 
 func StreamInterceptor(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-	userID, err := extractUserID(stream.Context())
-
+	userID, err := ExtractUserID(stream.Context())
 	if err != nil {
 		return err
 	}
+
+	log.Printf("USER ID: %s", userID)
 
 	newCtx := context.WithValue(stream.Context(), UserIDKey, userID)
 
@@ -66,7 +67,7 @@ func StreamInterceptor(srv interface{}, stream grpc.ServerStream, info *grpc.Str
 	return handler(srv, wrapped)
 }
 
-func extractUserID(ctx context.Context) (string, error) {
+func ExtractUserID(ctx context.Context) (string, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return "", fmt.Errorf("Sem metadados na chamada")

@@ -10,10 +10,12 @@ import (
 	storagev1 "github.com/MateusdiSousa/go-photos/api/internal/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata" // Importado para injetar o ID real no contexto
 )
 
 var (
-	addr = flag.String("addr", "localhost:50051", "the address to connect to")
+	addr      = flag.String("addr", "localhost:50051", "the address to connect to")
+	mediaType = flag.String("t", "image", "tipo de mídia para testar: 'image' ou 'video'")
 )
 
 func main() {
@@ -25,15 +27,44 @@ func main() {
 	}
 	defer conn.Close()
 
-	file, err := os.Open("./teste.jpg")
+	// Definição dinâmica dos metadados e caminhos baseados na flag
+	var (
+		filePath     string
+		filename     string
+		reqMediaType string
+		reqMimetype  string
+	)
 
-	if err != nil {
-		log.Fatalf("Erro ao abrir arquivo de teste: %s", err)
+	switch *mediaType {
+	case "video":
+		filePath = "./teste.mp4"
+		filename = "teste.mp4"
+		reqMediaType = "video"
+		reqMimetype = "video/mp4"
+	case "image":
+		fallthrough
+	default:
+		filePath = "./teste.jpg"
+		filename = "teste.jpg"
+		reqMediaType = "image"
+		reqMimetype = "image/jpg"
 	}
+
+	file, err := os.Open(filePath)
+	if err != nil {
+		log.Fatalf("Erro ao abrir arquivo de teste (%s): %s", filePath, err)
+	}
+	defer file.Close()
 
 	client := storagev1.NewStorageServiceClient(conn)
 
-	stream, err := client.Upload(context.Background())
+	// 🔥 Alinhado com a TASK 005: Injetando o x-user-id via Metadata no contexto de saída
+	ctx := metadata.NewOutgoingContext(context.Background(), metadata.Pairs("user-id", "1"))
+
+	stream, err := client.Upload(ctx)
+	if err != nil {
+		log.Fatalf("Erro ao abrir stream de upload: %s", err)
+	}
 
 	buffer := make([]byte, 32*1024)
 
@@ -50,9 +81,9 @@ func main() {
 
 		err = stream.Send(&storagev1.UploadRequest{
 			UserId:    "1",
-			Filename:  "teste",
-			MediaType: "image",
-			Mimetype:  "image/jpg",
+			Filename:  filename,
+			MediaType: reqMediaType,
+			Mimetype:  reqMimetype,
 			Metadados: "",
 			Size:      int64(n),
 			Chunks:    buffer[:n],
@@ -65,7 +96,6 @@ func main() {
 		if err != nil {
 			log.Fatalf("Erro ao fazer stream do arquivo de teste: %s", err)
 		}
-
 	}
 
 	res, err := stream.CloseAndRecv()

@@ -54,7 +54,7 @@ func (service *MediaService) GetMediaPaged(ctx context.Context, userId string, p
 	reqParams.Set("response-content-disposition", "inline")
 
 	for _, media := range medias {
-		reqParams.Set("response-content-type", media.Mimetype)
+		reqParams.Set("response-content-type", "image/webp")
 		objectFile, err := service.minioClient.PresignedGetObject(ctx, media.Bucket, media.HashSha256, expirationTime, reqParams)
 		if err != nil {
 			log.Printf("Falha ao gerar URL para arquivo: %s", media.FileId)
