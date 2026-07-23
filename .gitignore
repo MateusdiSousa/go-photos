@@ -1,4 +1,5 @@
 node_key
 infra/garage-s3/data/**
 infra/kafka/kafka_data/**
+api/internal/proto/**
 .env
