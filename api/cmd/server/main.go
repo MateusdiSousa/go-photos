@@ -32,10 +32,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Falha ao ouvir na porta %d: %s", port, err)
 	}
-	err = godotenv.Load()
-	if err != nil {
-		log.Fatalf("Falha ao carregar arquivo .env: %s", err)
-	}
+	godotenv.Load()
 	databaseUrl := os.Getenv("POSTGRES_DATABASE_URL")
 
 	// Conexões, Clientes e Repositórios
